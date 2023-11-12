@@ -51,6 +51,9 @@ warranties or guarantees that this AWS Content will result in a particular outco
 
 # Introduction
 
+This project was developed to produce the results presented in the blog post 
+[Benchmarking the Oxford Nanopore Technologies basecallers on AWS](https://aws.amazon.com/blogs/hpc/benchmarking-the-oxford-nanopore-technologies-basecallers-on-aws/).
+
 This project stands up an environment for running performance benchmark tests for the [Oxford Nanopore Technologies](https://nanoporetech.com)
 basecallers guppy and dorado.
 
@@ -58,56 +61,22 @@ Guppy and dorado make extensive use of GPUs. The purpose of this performance ben
 and cost for various AWS EC2 instance types. The performance test results help customers with Oxford Nanopore sequencer
 instruments to select appropriate instance types for running basecalling on the AWS cloud.
 
-This project was developed to produce the results presented in the blog post 
-[Benchmarking the Oxford Nanopore Technologies basecallers on AWS](https://aws.amazon.com/blogs/hpc/benchmarking-the-oxford-nanopore-technologies-basecallers-on-aws/)
-
 This project deploys the following architecture (for a discussion please see the blog post linked above).
 
 ![architecture](doc/ONT%20benchmark%20environment%20v4.jpg)
 
 # Table of contents
 
-1. [Deploying in an AWS Isengard account](#deployment-in-an-aws-isengard-account)
-2. [Preparing the AWS account for deployment](#preparing-the-aws-account-for-deployment)
-3. [Deploying the project](#deploying-the-project)
-4. [Validating deployment completion](#validating-deployment-completion)
-5. [Running the performance benchmark tests](#running-the-performance-benchmark-tests)
-6. [Monitoring the execution of the running benchmark tests](#monitoring-the-execution-of-the-running-benchmark-tests)
-7. [Generating the results report](#generating-the-results-report)
-8. [Cleaning up](#cleaning-up)
-9. [Security](#security)
-10. [License](#license)
+1. [Preparing the AWS account for deployment](#preparing-the-aws-account-for-deployment)
+2. [Deploying the project](#deploying-the-project)
+3. [Validating deployment completion](#validating-deployment-completion)
+4. [Running the performance benchmark tests](#running-the-performance-benchmark-tests)
+5. [Monitoring the execution of the running benchmark tests](#monitoring-the-execution-of-the-running-benchmark-tests)
+6. [Generating the results report](#generating-the-results-report)
+7. [Cleaning up](#cleaning-up)
+8. [Security](#security)
+9. [License](#license)
 
-## Deploying in an AWS Isengard account
-
-THIS SECTION TO BE REMOVED FOR PUBLIC REPOSITORY.
-
-The project's source code is hosted on [GitLab](https://gitlab.aws.dev/steditt/performance-test-oxford-nanopore-technologies-basecaller).
-Please make sure you have set up your environment using SSH. SSH access is the approved and supported method of 
-performing git operations against the project. To set up SSH access please following the instructions [here](https://w.amazon.com/bin/view/AWS/Teams/WWPS/TSD/GitLab),
-section "Setting up git Access".
-
-Once your SSH access is configured, remember you need to authenticate yourself once a day by running:
-```
-mwinit --aea
-```
-
-You can now clone the project:
-```
-git clone git@ssh.gitlab.aws.dev:oxford-nanopore-technologies/basecaller-performance-benchmarking.git
-cd basecaller-performance-benchmarking
-```
-
-[Code Defender](https://w.amazon.com/bin/view/AWS/Teams/Proserve/SRC/ACE/SEAT/CodeDefender/UserHelp/) is required when 
-working with code repositories in Amazon. Configure git defender for the repository:
-```shell
-git-defender --setup
-```
-
-For deployments in AWS Isengard accounts it is necessary to deploy the [Excluder](https://gitlab.aws.dev/oxford-nanopore-technologies/exclude-image-builder-accountguardian)
-project first. The Excluder is a workaround to address failing AMI image pipelines deployed using EC2 Image builder 
-in Isengard accounts. [Account Guardian](https://w.amazon.com/bin/view/AWS/Teams/SA/Rapid_Prototyping/Tools/Account_Guardian/)
-interferes with EC2 Image Builder and often causes the AMI image build automation to fail.
 
 ## Preparing the AWS account for deployment
 
