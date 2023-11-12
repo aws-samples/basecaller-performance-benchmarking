@@ -1,0 +1,24 @@
+name: ECSContainerAgent
+description: Install the ECS container agent
+schemaVersion: 1.0
+
+phases:
+  - name: build
+    steps:
+      - name: ECSContainerAgent
+        action: ExecuteBash
+        inputs:
+          commands:
+            - |
+              INDICATOR_ECSAGENT=/var/tmp/indicator-ecsagent
+              if [ -f "${INDICATOR_ECSAGENT}" ]; then
+                echo 'ECS agent indicator file exists. Assuming installation has completed already. Exiting.'
+                rm "${INDICATOR_ECSAGENT}"
+                exit 0
+              fi
+              curl -O https://s3.us-west-2.amazonaws.com/amazon-ecs-agent-us-west-2/amazon-ecs-init-latest.amd64.deb
+              sudo dpkg -i amazon-ecs-init-latest.amd64.deb
+              systemctl stop ecs
+              rm -rf /var/log/ecs/*
+              rm -rf /var/lib/ecs/data/*
+              touch "${INDICATOR_ECSAGENT}"

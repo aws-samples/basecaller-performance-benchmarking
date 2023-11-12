@@ -1,0 +1,7 @@
+FROM {{{ imagebuilder:parentImage }}}
+
+{{{ imagebuilder:environments }}}
+
+{{{ imagebuilder:components }}}
+
+ENTRYPOINT ["./basecaller.sh"]

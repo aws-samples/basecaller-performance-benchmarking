@@ -1,0 +1,47 @@
+name: FSxforLustreClient
+description: Installation of FSx for Lustre client
+schemaVersion: 1.0
+
+parameters:
+  - MountFSxScript:
+      type: string
+      default: "enter a valid S3 path"
+      description: S3 path to the mount FSx script.
+
+phases:
+  - name: build
+    steps:
+      - name: RebootStep
+        action: Reboot
+        onFailure: Abort
+        maxAttempts: 2
+        inputs:
+          delaySeconds: 20
+      - name: InstallFSxforLustreClient
+        action: ExecuteBash
+        inputs:
+          commands:
+            - |
+              INDICATOR_FSXLUSTRE=/var/tmp/indicator-fsxlustre
+              if [ -f "${INDICATOR_FSXLUSTRE}" ]; then
+                echo 'FSX Lustre indicator file exists. Assuming installation has completed already. Exiting.'
+                rm "${INDICATOR_FSXLUSTRE}"
+                exit 0
+              fi
+              wget -O - https://fsx-lustre-client-repo-public-keys.s3.amazonaws.com/fsx-ubuntu-public-key.asc | gpg --dearmor | sudo tee /usr/share/keyrings/fsx-ubuntu-public-key.gpg >/dev/null
+              bash -c 'echo "deb [signed-by=/usr/share/keyrings/fsx-ubuntu-public-key.gpg] https://fsx-lustre-client-repo.s3.amazonaws.com/ubuntu focal main" > /etc/apt/sources.list.d/fsxlustreclientrepo.list && apt-get update'
+              apt-get install -y lustre-client-modules-$(uname -r)
+              mkdir -p /mount_fsx
+              touch "${INDICATOR_FSXLUSTRE}"
+      - name: DownloadMountFSxScript
+        action: S3Download
+        inputs:
+          - source: '{{ MountFSxScript }}'
+            destination: /mount_fsx/mount_fsx.sh
+      - name: ConfigureMountFSx
+        action: ExecuteBash
+        inputs:
+          commands:
+            - chmod +x /mount_fsx/mount_fsx.sh
+            - echo "@reboot /mount_fsx/mount_fsx.sh" >> /var/spool/cron/crontabs/root
+            - sudo chmod 600 /var/spool/cron/crontabs/root

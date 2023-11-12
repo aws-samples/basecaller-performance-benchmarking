@@ -1,0 +1,90 @@
+name: GuppyBasecaller
+description: Installation of guppy basecaller
+schemaVersion: 1.0
+
+parameters:
+  - S3PathBasecallerRunScript:
+      type: string
+      default: "enter a valid S3 path"
+      description: S3 path to the basecaller run script.
+
+phases:
+  - name: build
+    steps:
+      - name: InstallONTRepository
+        action: ExecuteBash
+        inputs:
+          commands:
+            - apt-get update
+            - apt-get install --no-install-recommends -y gnupg2 ca-certificates jq software-properties-common
+            - DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata
+            - echo "deb https://cdn.oxfordnanoportal.com/apt jammy-stable non-free" > /etc/apt/sources.list.d/ont.sources.list
+            - echo "deb https://cdn.oxfordnanoportal.com/apt focal-stable non-free" >> /etc/apt/sources.list.d/ont.sources.list
+            - curl https://cdn.oxfordnanoportal.com/apt/ont-repo.pub | apt-key add -
+      - name: InstallGuppyBasecaller
+        action: ExecuteBash
+        inputs:
+          commands:
+            - |
+              INDICATOR_ONTGUPPY=/var/tmp/indicator-ontguppy
+              if [ -f "${INDICATOR_ONTGUPPY}" ]; then
+                echo 'ONT Guppy indicator file exists. Assuming installation has completed already. Exiting.'
+                rm "${INDICATOR_ONTGUPPY}"
+                exit 0
+              fi
+              apt-get update
+              apt-get -y install ont-guppy zutils
+              apt-get clean
+              apt-get autoremove -y
+              touch "${INDICATOR_ONTGUPPY}"
+      - name: InstallDorado
+        action: ExecuteBash
+        inputs:
+          commands:
+            - |
+              INDICATOR_DORADO=/var/tmp/indicator-dorado
+              if [ -f "${INDICATOR_DORADO}" ]; then
+                echo 'Dorado indicator file exists. Assuming installation has completed already. Exiting.'
+                rm "${INDICATOR_DORADO}"
+                exit 0
+              fi
+              apt-get clean
+              apt-get update
+              apt-get install -y cmake build-essential wget libsz2 python3-pip samtools libjson-perl
+              pip install pod5_format_tools pod5
+              wget -q https://cdn.oxfordnanoportal.com/software/analysis/dorado-0.3.2-linux-x64.tar.gz -O dorado.tar.gz
+              tar -xzf dorado.tar.gz
+              mv dorado-0.3.2*linux* /usr/local/dorado
+              ln -s /usr/local/dorado/bin/dorado /usr/local/bin/
+              mkdir -p /usr/local/dorado/models
+              cd /usr/local/dorado/models
+              dorado download
+              dorado -v
+              rm -rf /dorado*
+              apt-get remove -y cmake build-essential
+              apt-get autoremove -y
+              apt-get clean
+              touch "${INDICATOR_DORADO}"
+      - name: DownloadBasecallerRunScript
+        action: S3Download
+        inputs:
+          - source: '{{ S3PathBasecallerRunScript }}'
+            destination: basecaller.sh
+      - name: ChmodBasecallerRunScript
+        action: ExecuteBash
+        inputs:
+          commands:
+            - chmod +x basecaller.sh
+
+  - name: validate
+    steps:
+      - name: GuppyBasecaller
+        action: ExecuteBash
+        inputs:
+          commands:
+            - guppy_basecaller --version
+      - name: Dorado
+        action: ExecuteBash
+        inputs:
+          commands:
+            - dorado --version

@@ -1,0 +1,32 @@
+name: AWSCLI
+description: Installation of AWS CLI
+schemaVersion: 1.0
+
+phases:
+  - name: build
+    steps:
+      - name: AWSCLI
+        action: ExecuteBash
+        inputs:
+          commands:
+            - |
+              INDICATOR_AWSCLI=/var/tmp/indicator-awscli
+              if [ -f "${INDICATOR_AWSCLI}" ]; then
+                echo 'AWS CLI indicator file exists. Assuming installation has completed already. Exiting.'
+                rm "${INDICATOR_AWSCLI}"
+                exit 0
+              fi
+              apt-get update
+              apt-get install --no-install-recommends -y unzip
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip -qq awscliv2.zip
+              ./aws/install
+              touch "${INDICATOR_AWSCLI}"
+
+  - name: validate
+    steps:
+      - name: AWSCLI
+        action: ExecuteBash
+        inputs:
+          commands:
+            - aws --version
