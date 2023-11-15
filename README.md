@@ -134,7 +134,7 @@ cdk deploy --all
 ```
 
 The project consists of multiple stacks. If you don't wish to manually confirm the deployment of each stack and the 
-security settings, you can run deployment with the following parameters. `--require-approval never` saves you from 
+security settings, you can run deployment with the following parameters: `--require-approval never` saves you from 
 confirming the security settings and `--no-prompts` removes the manual confirmation before deployment of each stack.
 ```shell
 cdk deploy --all --require-approval never --no-prompts
@@ -146,7 +146,7 @@ After the CDK deployment of the infrastructure, a few automated steps are trigge
 container with the guppy and dorado tools are being build. The test data is being downloaded. The instructions
 below help to check when these steps have been completed.
 
-**CDK deployment:** The CDK deployment takes around 35 minutes. Once completed, CDK will display the following message on the command line.
+1. **CDK deployment:** The CDK deployment takes around 35 minutes. Once completed, CDK will display the following message on the command line.
 ```shell
 PerfBench: deploying... [1/2]
 PerfBench: creating CloudFormation changeset...
@@ -174,9 +174,9 @@ PerfBench-Downloader: creating CloudFormation changeset...
 ✨  Total time: 181.93s
 ```
 
-**Base AMI image and docker container builds:** The base AMI image and docker container builds complete around 25 minutes 
-after the CDK deployment has completed. To check the status, navigate to the EC2 Image Builder console. Select the
-`ONT base AMI pipeline`. In the _Output images_ section you should see an image version with _Image status_ "Available":
+2. **Base AMI image and docker container builds:** The base AMI image and docker container builds complete around 25 minutes 
+after the CDK deployment has completed. To check the status, navigate to the [EC2 Image Builder console](https://us-west-2.console.aws.amazon.com/imagebuilder/home?region=us-west-2#/viewPipelines).
+Select the `ONT base AMI pipeline`. In the _Output images_ section you should see an image version with _Image status_ "Available":
 
 ![EC2 Image Builder base AMI check](doc/ec2_image_builder_base_ami_check.png)
 
@@ -185,7 +185,7 @@ _Image status_ "Available":
 
 ![EC2 Image Builder base AMI check](doc/ec2_image_builder_docker_container_check.png)
 
-**Test data download:** Downloading and converting the test data from FAST5 to POD5 format takes around 7.5 hours. 
+3. **Test data download:** Downloading and converting the test data from FAST5 to POD5 format takes around 7.5 hours. 
 
 CDK deploys an EC2 instance (shown as "downloader" in the architecture diagram above) that 
 automatically downloads the [CliveOME 5mC dataset](https://labs.epi2me.io/cliveome_5mc_cfdna_celldna/)
@@ -193,8 +193,9 @@ data set as test data from an S3 bucket maintained by Oxford Nanopore. The data 
 After the download, the downloader instance will trigger the deletion of the downloader CDK stack. This is done to avoid 
 cost from an idle EC2 instance.
 
-To check progress on the download open the CloudWatch Logs console and check the `/aws/PerfBench/downloader` log group. 
-The download is complete when you see the following lines at the end of the log:
+To check progress on the download open the [CloudWatch Logs console](https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#logsV2:log-groups/log-group/$252Faws$252FPerfBench$252Fdownloader) 
+and check the `/aws/PerfBench/downloader` log group. The download is complete when you see the following lines at the 
+end of the log:
 
 ```
 ----- check download and conversion results -----
