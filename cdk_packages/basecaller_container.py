@@ -65,7 +65,7 @@ class BasecallerContainer(cdk.NestedStack):
             description='ONT basecaller container',
             container_type='DOCKER',
             platform_override='Linux',
-            parent_image=f'{account}.dkr.ecr.{region}.amazonaws.com/nvidia/cuda:12.0.0-runtime-ubuntu20.04',
+            parent_image=f'{account}.dkr.ecr.{region}.amazonaws.com/nvidia/cuda:12.3.0-runtime-ubuntu20.04',
             version=datetime.datetime.now().strftime('%Y.%m%d.%H%M%S'),
             dockerfile_template_data=open(os.path.join(dirname, 'assets', 'dockerfile_basecaller.yaml')).read(),
             instance_configuration=imagebuilder.CfnContainerRecipe.InstanceConfigurationProperty(

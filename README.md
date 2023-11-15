@@ -104,11 +104,11 @@ region.
 ```shell
 aws ecr create-repository --repository-name 'nvidia/cuda' --region us-west-2
 docker login
-docker pull nvidia/cuda:12.0.0-runtime-ubuntu20.04
+docker pull nvidia/cuda:12.3.0-runtime-ubuntu20.04
 aws_account_id=$(aws sts get-caller-identity --query 'Account' --output text)
-docker tag nvidia/cuda:12.0.0-runtime-ubuntu20.04 "$aws_account_id.dkr.ecr.us-west-2.amazonaws.com/nvidia/cuda:12.0.0-runtime-ubuntu20.04"
+docker tag nvidia/cuda:12.3.0-runtime-ubuntu20.04 "$aws_account_id.dkr.ecr.us-west-2.amazonaws.com/nvidia/cuda:12.3.0-runtime-ubuntu20.04"
 aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin "$aws_account_id.dkr.ecr.us-west-2.amazonaws.com"
-docker push "$aws_account_id.dkr.ecr.us-west-2.amazonaws.com/nvidia/cuda:12.0.0-runtime-ubuntu20.04"
+docker push "$aws_account_id.dkr.ecr.us-west-2.amazonaws.com/nvidia/cuda:12.3.0-runtime-ubuntu20.04"
 ```
 
 ## Deploying the project
