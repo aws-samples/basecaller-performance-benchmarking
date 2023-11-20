@@ -142,7 +142,7 @@ def generate_chart_performance_samples_per_sec(results: pd.DataFrame):
         },
         text_auto='.2s',
         orientation='h',
-        height=400, width=1200,
+        height=len(instance_order) * 90, width=1200,
     )
     fig.update_traces(textposition='outside', cliponaxis=False)
     fig.update_layout(legend_traceorder='reversed')
@@ -185,7 +185,7 @@ def generate_chart_runtime_whg_30x(results: pd.DataFrame):
         },
         text_auto='.1f',
         orientation='h',
-        height=400, width=1200,
+        height=len(instance_order) * 90, width=1200,
     )
     fig.update_traces(textposition='outside', cliponaxis=False)
     fig.update_layout(legend_traceorder='reversed')
