@@ -82,8 +82,8 @@ class Downloader(cdk.Stack):
             self, 'downloader',
             instance_type=ec2.InstanceType('c6g.4xlarge'),  # Arm-based AWS Graviton2 processors
             machine_image=ec2.MachineImage.generic_linux({
-                'us-west-2': 'ami-03f6bd8c9c6230968'  # Canonical, Ubuntu, 22.04 LTS, arm64 jammy image
-                # build on 2023-03-03   TODO: update
+                'us-west-2': 'ami-012bf399e76fe4368'  # Canonical, Ubuntu, 22.04 LTS, arm64 jammy image
+                # build on 2024-03-01
             }),
             vpc=params.network.vpc,
             require_imdsv2=True,
