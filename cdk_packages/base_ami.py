@@ -74,7 +74,7 @@ class BaseAMI(cdk.NestedStack):
             self, 'ONT base AMI',
             name='ONT base AMI',
             description='ONT base AMI',
-            parent_image='ami-0c95e55075f3c7f51',  # Deep Learning AMI GPU PyTorch 2.1.0 (Ubuntu 20.04) 20231103
+            parent_image='ami-0c95e55075f3c7f51',  # Deep Learning AMI GPU PyTorch 2.1.0 (Ubuntu 20.04) 20231103, TODO: update
             version=datetime.datetime.now().strftime('%Y.%m%d.%H%M%S'),
             components=[
                 imagebuilder.CfnImageRecipe.ComponentConfigurationProperty(

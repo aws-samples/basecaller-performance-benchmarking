@@ -41,7 +41,7 @@ class ComputeEnvUpdate(cdk.NestedStack):
             ),
             handler='compute_env_update.lambda_handler',
             timeout=cdk.Duration.minutes(5),
-            runtime=lambda_.Runtime.PYTHON_3_9,
+            runtime=lambda_.Runtime.PYTHON_3_12,
             log_retention=logs.RetentionDays.THREE_MONTHS,
         )
 

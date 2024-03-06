@@ -43,7 +43,7 @@ class ImageBuildStarter(cdk.NestedStack):
             code=lambda_.Code.from_asset(os.path.join(dirname, 'assets', 'lambda_functions', 'start_image_build')),
             handler='start_image_build.lambda_handler',
             timeout=cdk.Duration.minutes(5),
-            runtime=lambda_.Runtime.PYTHON_3_9,
+            runtime=lambda_.Runtime.PYTHON_3_12,
             log_retention=logs.RetentionDays.THREE_MONTHS,
         )
 

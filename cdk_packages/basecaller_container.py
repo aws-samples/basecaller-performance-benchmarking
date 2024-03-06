@@ -69,7 +69,7 @@ class BasecallerContainer(cdk.NestedStack):
             version=datetime.datetime.now().strftime('%Y.%m%d.%H%M%S'),
             dockerfile_template_data=open(os.path.join(dirname, 'assets', 'dockerfile_basecaller.yaml')).read(),
             instance_configuration=imagebuilder.CfnContainerRecipe.InstanceConfigurationProperty(
-                image='ami-05f5eb8122c493ef0',
+                image='ami-05f5eb8122c493ef0',  # TODO: update
                 block_device_mappings=[imagebuilder.CfnContainerRecipe.InstanceBlockDeviceMappingProperty(
                     device_name="/dev/sda1",
                     ebs=imagebuilder.CfnContainerRecipe.EbsInstanceBlockDeviceSpecificationProperty(
