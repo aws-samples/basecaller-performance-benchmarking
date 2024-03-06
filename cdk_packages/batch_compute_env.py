@@ -248,7 +248,7 @@ def get_instance_types():
         describe_args['NextToken'] = results['NextToken']
 
         # Remove p5.48xlarge instance type. As of 2023-07-28 this instance type cannot yet be used as AWS Batch
-        # compute environment instance type.
+        # compute environment instance type.   TODO: validate this
         if 'p5.48xlarge' in instance_types:
             instance_types.pop('p5.48xlarge')
 

@@ -83,11 +83,21 @@ class Downloader(cdk.Stack):
             instance_type=ec2.InstanceType('c6g.4xlarge'),  # Arm-based AWS Graviton2 processors
             machine_image=ec2.MachineImage.generic_linux({
                 'us-west-2': 'ami-03f6bd8c9c6230968'  # Canonical, Ubuntu, 22.04 LTS, arm64 jammy image
-                # build on 2023-03-03
+                # build on 2023-03-03   TODO: update
             }),
             vpc=params.network.vpc,
             require_imdsv2=True,
             role=self.ec2_instance_role,
+            block_devices=[
+                ec2.BlockDevice(
+                    device_name='/dev/sda1',
+                    volume=ec2.BlockDeviceVolume.ebs(
+                        30,
+                        volume_type=ec2.EbsDeviceVolumeType.GP3,
+                        encrypted=True
+                    )
+                )
+            ],
         )
         # FSX filesystem needs to be ready in order to run the POD5 conversion.
         self.downloader_instance.node.add_dependency(params.fsx_lustre.cfn_fsx_file_system)
