@@ -20,10 +20,10 @@ dirname = os.path.dirname(__file__)
 ec2_client = boto3.client('ec2')
 
 
-class BaseAMI(cdk.NestedStack):
+class BaseAMI(Construct):
 
-    def __init__(self, scope: Construct, construct_id: str, params=None, **kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
+    def __init__(self, scope: Construct, construct_id: str, params=None):
+        super().__init__(scope, construct_id)
 
         region = cdk.Stack.of(self).region
         account = cdk.Stack.of(self).account
@@ -145,7 +145,7 @@ class BaseAMI(cdk.NestedStack):
 
         # ---------- pipeline --------------------
 
-        ami_pipeline = imagebuilder.CfnImagePipeline(
+        self.ami_pipeline = imagebuilder.CfnImagePipeline(
             self, 'ONT base AMI pipeline',
             name='ONT base AMI pipeline',
             description='ONT base AMI pipeline',
@@ -154,26 +154,6 @@ class BaseAMI(cdk.NestedStack):
             image_recipe_arn=self.recipe_ont_base_image.attr_arn,
             status='ENABLED',
         )
-        cdk.CfnOutput(self, "EC2ImageBuilderPipelineARN", value=ami_pipeline.attr_arn)
-
-        # ---------- EventBridge rules --------------------
-
-        start_image_builds_rule = events.Rule(
-            self, 'Trigger Lambda to start AMI build',
-            description='When CloudFormation stack for base AMI has been created or updated, '
-                        'trigger Lambda to start AMI build',
-            event_pattern=events.EventPattern(
-                source=['aws.cloudformation'],
-                detail_type=['CloudFormation Stack Status Change'],
-                detail={
-                    'stack-id': [cdk.Stack.of(self).stack_id],
-                    'status-details': {
-                        'status': ['CREATE_COMPLETE', 'UPDATE_COMPLETE']
-                    }
-                }
-            )
-        )
-        start_image_builds_rule.add_target(targets.LambdaFunction(params.image_build_starter.start_image_build))
 
         # ----------------------------------------------------------------
         #       cdk_nag suppressions

@@ -20,13 +20,13 @@ dirname = os.path.dirname(__file__)
 ec2_client = boto3.client('ec2')
 
 
-class ComputeEnvUpdate(cdk.NestedStack):
+class ComputeEnvUpdate(Construct):
     """
     Lambda function to update AWS Batch compute environments.
     """
 
-    def __init__(self, scope: Construct, construct_id: str, params=None, **kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
+    def __init__(self, scope: Construct, construct_id: str, params=None):
+        super().__init__(scope, construct_id)
 
         region = cdk.Stack.of(self).region
         account = cdk.Stack.of(self).account
@@ -95,9 +95,8 @@ class ComputeEnvUpdate(cdk.NestedStack):
         # ----------------------------------------------------------------
 
         NagSuppressions.add_resource_suppressions_by_path(
-            self,
-            path=f'/{self.nested_stack_parent.stack_name}/{construct_id}'
-                 f'/{self.update_compute_environments.node.default_child.description}/ServiceRole/Resource',
+            cdk.Stack.of(self),
+            path=f'/{self.node.path}/{self.update_compute_environments.node.default_child.description}/ServiceRole/Resource',
             suppressions=[
                 {
                     'id': 'AwsSolutions-IAM4',
@@ -143,36 +142,3 @@ class ComputeEnvUpdate(cdk.NestedStack):
             ],
             apply_to_children=True,
         )
-
-        log_retention_id = [
-            obj.node.id for obj in self.node.find_all()
-            if re.match('LogRetention[a-z0-9]+$', obj.node.id)][0]
-        NagSuppressions.add_resource_suppressions_by_path(
-            self,
-            path=f'/{self.nested_stack_parent.stack_name}/{construct_id}'
-                 f'/{log_retention_id}/ServiceRole/Resource',
-            suppressions=[
-                {
-                    'id': 'AwsSolutions-IAM4',
-                    'reason': 'Log retention handler lambda uses the AWSLambdaBasicExecutionRole AWS Managed Policy '
-                              'to ensure the Function has the proper permissions to execute and create logs.',
-                    'appliesTo': [
-                        'Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
-                    ],
-                },
-            ],
-        )
-        NagSuppressions.add_resource_suppressions_by_path(
-            self,
-            path=f'/{self.nested_stack_parent.stack_name}/{construct_id}'
-                 f'/{log_retention_id}/ServiceRole/DefaultPolicy/Resource',
-            suppressions=[
-                {
-                    'id': 'AwsSolutions-IAM5',
-                    'reason': 'Log retention handler lambda uses the AWSLambdaBasicExecutionRole AWS Managed Policy.',
-                    'appliesTo': ['Resource::*'],
-                },
-
-            ],
-        )
-

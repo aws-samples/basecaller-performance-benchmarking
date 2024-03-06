@@ -12,13 +12,13 @@ dirname = os.path.dirname(__file__)
 ec2_client = boto3.client('ec2')
 
 
-class BatchJobQueues(cdk.NestedStack):
+class BatchJobQueues(Construct):
     """
     Create AWS Batch job queues.
     """
 
-    def __init__(self, scope: Construct, construct_id: str, params=None, **kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
+    def __init__(self, scope: Construct, construct_id: str, params=None):
+        super().__init__(scope, construct_id)
 
         previous = None
 

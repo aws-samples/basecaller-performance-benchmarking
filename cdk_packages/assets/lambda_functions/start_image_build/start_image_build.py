@@ -44,12 +44,14 @@ def lambda_handler(event=None, context=None):
 
 
 def start_image_builds(event, context):
-    cf_stack = cf_resource.Stack(event['detail']['stack-id'])
-    outputs = {output['OutputKey']: output['OutputValue'] for output in cf_stack.outputs}
-    if 'EC2ImageBuilderPipelineARN' in outputs.keys():
-        LOGGER.info(f'starting EC2 Image Builder pipeline {outputs["EC2ImageBuilderPipelineARN"]}.')
+    pipelines = json.loads(
+        ssm_client.get_parameter(
+            Name='/ONT-performance-benchmark/image-build-pipelines')['Parameter']['Value']
+    )
+    for pipeline_arn in pipelines['pipelines']:
+        LOGGER.info(f'starting EC2 Image Builder pipeline {pipeline_arn}.')
         resp = ib_client.start_image_pipeline_execution(
-            imagePipelineArn=outputs["EC2ImageBuilderPipelineARN"],
+            imagePipelineArn=pipeline_arn,
         )
         LOGGER.info(f'response HTTP status code: {resp["ResponseMetadata"]["HTTPStatusCode"]}')
 

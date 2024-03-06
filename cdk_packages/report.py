@@ -16,10 +16,10 @@ dirname = os.path.dirname(__file__)
 ec2_client = boto3.client('ec2')
 
 
-class Report(cdk.NestedStack):
+class Report(Construct):
 
-    def __init__(self, scope: Construct, construct_id: str, params=None, **kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
+    def __init__(self, scope: Construct, construct_id: str, params=None):
+        super().__init__(scope, construct_id)
 
         # Set up the table to collect measurement results.
         table = dynamodb.Table(

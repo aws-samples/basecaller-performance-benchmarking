@@ -16,13 +16,13 @@ from constructs import Construct
 dirname = os.path.dirname(__file__)
 
 
-class StatusParameters(cdk.NestedStack):
+class StatusParameters(Construct):
     """
     A set of SSM parameters that are used to track the status of the data download and POD5 conversion.
     """
 
-    def __init__(self, scope: Construct, construct_id: str, params=None, **kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
+    def __init__(self, scope: Construct, construct_id: str, params=None):
+        super().__init__(scope, construct_id)
 
         self.download_status = ssm.StringParameter(
             self, 'SSM parameter data download status',

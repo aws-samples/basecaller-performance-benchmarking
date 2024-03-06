@@ -20,10 +20,10 @@ dirname = os.path.dirname(__file__)
 ec2_client = boto3.client('ec2')
 
 
-class BasecallerContainer(cdk.NestedStack):
+class BasecallerContainer(Construct):
 
-    def __init__(self, scope: Construct, construct_id: str, params=None, **kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
+    def __init__(self, scope: Construct, construct_id: str, params=None):
+        super().__init__(scope, construct_id)
 
         region = cdk.Stack.of(self).region
         account = cdk.Stack.of(self).account
@@ -118,7 +118,7 @@ class BasecallerContainer(cdk.NestedStack):
 
         # ---------- pipeline --------------------
 
-        container_pipeline = imagebuilder.CfnImagePipeline(
+        self.container_pipeline = imagebuilder.CfnImagePipeline(
             self, 'ONT basecaller container pipeline',
             name='ONT basecaller container pipeline',
             description='ONT basecaller container pipeline',
@@ -127,24 +127,3 @@ class BasecallerContainer(cdk.NestedStack):
             container_recipe_arn=self.recipe_container.attr_arn,
             status='ENABLED',
         )
-        # params.image_builder.image_builder_pipeline_arns.append(container_pipeline.attr_arn)
-        cdk.CfnOutput(self, "EC2ImageBuilderPipelineARN", value=container_pipeline.attr_arn)
-
-        # ---------- EventBridge rules --------------------
-
-        start_image_builds_rule = events.Rule(
-            self, 'Trigger Lambda to start container build',
-            description='When CloudFormation stack for basecaller container has been created or updated, '
-                        'trigger Lambda to start container build',
-            event_pattern=events.EventPattern(
-                source=['aws.cloudformation'],
-                detail_type=['CloudFormation Stack Status Change'],
-                detail={
-                    'stack-id': [cdk.Stack.of(self).stack_id],
-                    'status-details': {
-                        'status': ['CREATE_COMPLETE', 'UPDATE_COMPLETE']
-                    }
-                }
-            )
-        )
-        start_image_builds_rule.add_target(targets.LambdaFunction(params.image_build_starter.start_image_build))

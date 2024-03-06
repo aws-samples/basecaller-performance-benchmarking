@@ -11,10 +11,10 @@ from cdk_nag import NagSuppressions
 from constructs import Construct
 
 
-class FSxLustre(cdk.NestedStack):
+class FSxLustre(Construct):
 
-    def __init__(self, scope: Construct, construct_id: str, params=None, **kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
+    def __init__(self, scope: Construct, construct_id: str, params=None):
+        super().__init__(scope, construct_id)
 
         # Security groups for FSx for Lustre. Rules are based on
         # https://docs.aws.amazon.com/fsx/latest/LustreGuide/limit-access-security-groups.html

@@ -15,10 +15,10 @@ dirname = os.path.dirname(__file__)
 ec2_client = boto3.client('ec2')
 
 
-class Data(cdk.NestedStack):
+class Data(Construct):
 
-    def __init__(self, scope: Construct, construct_id: str, params=None, **kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
+    def __init__(self, scope: Construct, construct_id: str, params=None):
+        super().__init__(scope, construct_id)
 
         # S3 bucket to hold the FAST5 files downloaded from Oxford Nanopore Technologies (ONT)
         self.bucket = s3.Bucket(
