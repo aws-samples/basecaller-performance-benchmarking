@@ -52,7 +52,6 @@ phases:
               apt-get update
               apt-get install -y cmake build-essential wget libsz2 python3-pip samtools libjson-perl
               pip install pod5_format_tools pod5
-# TODO: update
               wget -q https://cdn.oxfordnanoportal.com/software/analysis/dorado-0.4.3-linux-x64.tar.gz -O dorado.tar.gz 
               tar -xzf dorado.tar.gz
               mv dorado-0.4.3*linux* /usr/local/dorado

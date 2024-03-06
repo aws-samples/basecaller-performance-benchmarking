@@ -21,13 +21,13 @@ dirname = os.path.dirname(__file__)
 ec2_client = boto3.client('ec2')
 
 
-class BatchComputeEnv(cdk.NestedStack):
+class BatchComputeEnv(Construct):
     """
     Create AWS Batch compute environment.
     """
 
-    def __init__(self, scope: Construct, construct_id: str, params=None, **kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
+    def __init__(self, scope: Construct, construct_id: str, params=None):
+        super().__init__(scope, construct_id)
 
         region = cdk.Stack.of(self).region
         account = cdk.Stack.of(self).account
@@ -204,7 +204,7 @@ class BatchComputeEnv(cdk.NestedStack):
                         f'Action::s3:GetBucket*',
                         f'Action::s3:GetObject*',
                         f'Action::s3:List*',
-                        f'Resource::<{self.get_logical_id(params.data.bucket.node.default_child)}.Arn>/*',
+                        f'Resource::<{cdk.Stack.of(self).get_logical_id(params.data.bucket.node.default_child)}.Arn>/*',
                     ]
                 },
             ],

@@ -5,19 +5,8 @@ import boto3
 import cdk_nag
 from aws_cdk import Aspects
 
-from cdk_packages.base_ami import BaseAMI
-from cdk_packages.basecaller_container import BasecallerContainer
-from cdk_packages.batch_compute_env import BatchComputeEnv
-from cdk_packages.batch_job_queues import BatchJobQueues
-from cdk_packages.compute_env_update import ComputeEnvUpdate
-from cdk_packages.data import Data
+from cdk_packages.perfbench import PerfBench
 from cdk_packages.downloader import Downloader
-from cdk_packages.fsx_lustre import FSxLustre
-from cdk_packages.image_builder import ImageBuilder
-from cdk_packages.image_builds_starter import ImageBuildStarter
-from cdk_packages.network import Network
-from cdk_packages.report import Report
-from cdk_packages.status_parameters import StatusParameters
 
 
 class Params:
@@ -71,62 +60,15 @@ app = cdk.App()
 # cdk-nag: Check for compliance with CDK best practices
 #   https://github.com/cdklabs/cdk-nag
 # Uncomment the following line to run the cdk-nag checks
-# Aspects.of(app).add(cdk_nag.AwsSolutionsChecks(verbose=True))
+Aspects.of(app).add(cdk_nag.AwsSolutionsChecks(verbose=True))
 
-main_stack = cdk.Stack(
-    app, 'PerfBench',
-    description='ONT performance benchmark environment', env=environment
-)
-params.network = Network(
-    main_stack, 'Network', params=params,
-    description='VPC configuration'
-)
-params.data = Data(
-    main_stack, 'Data', params=params,
-    description='S3 bucket for storing test data'
-)
-params.image_builder = ImageBuilder(
-    main_stack, 'ImageBuilder', params=params,
-    description='EC2 Image Builder infrastructure configuration'
-)
-params.image_build_starter = ImageBuildStarter(
-    main_stack, 'ImageBuildStarter', params=params,
-    description='Lambda function to start AMI and container image builds'
-)
-params.base_ami = BaseAMI(
-    main_stack, 'BaseAMI', params=params,
-    description='Base AMI image configuration'
-)
-params.basecaller_container = BasecallerContainer(
-    main_stack, 'BasecallerContainer', params=params,
-    description='Configuration for containerized basecaller tools'
-)
-params.compute_env_update = ComputeEnvUpdate(
-    main_stack, 'ComputeEnvUpdate', params=params,
-    description='Update AWS Batch compute environments after a new AMI build has completed'
-)
-params.fsx_lustre = FSxLustre(
-    main_stack, 'FSXLustre', params=params,
-    description='FSx for Lustre configuration'
-)
-params.batch_compute_env = BatchComputeEnv(
-    main_stack, 'BatchComputeEnv', params=params,
-    description='AWS Batch compute environment'
-)
-params.batch_job_queues = BatchJobQueues(
-    main_stack, 'BatchJobQueues', params=params,
-    description='AWS Batch job queues'
-)
-params.report = Report(
-    main_stack, 'Report', params=params,
-    description='Table to store test results',
-)
-params.status_parameters = StatusParameters(
-    main_stack, 'StatusParameters', params=params,
-    description='SSM parameters to track the status of the data download and POD5 conversion.',
+params.perfbench = PerfBench(
+    app, 'ONT-PerfBench',
+    description='ONT performance benchmark environment',
+    env=environment
 )
 params.downloader = Downloader(
-    app, 'PerfBench-Downloader', params=params,
+    app, 'PerfBench-Downloader', params=params.perfbench.params,
     description='EC2 instance for automated download of performance test data set.',
     env=environment
 )

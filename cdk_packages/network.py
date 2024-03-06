@@ -1,24 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import aws_cdk as cdk
 from aws_cdk import (
     aws_ec2 as ec2,
     aws_ssm as ssm,
-    custom_resources as cr,
-    aws_iam as iam,
 )
-from cdk_nag import NagSuppressions
 from constructs import Construct
 
 
-class Network(cdk.NestedStack):
+class Network(Construct):
 
-    def __init__(self, scope: Construct, construct_id: str, params=None, **kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
-
-        region = cdk.Stack.of(self).region
-        account = cdk.Stack.of(self).account
+    def __init__(self, scope: Construct, construct_id: str, params=None):
+        super().__init__(scope, construct_id)
 
         self.vpc = ec2.Vpc(
             self, 'VPC',
