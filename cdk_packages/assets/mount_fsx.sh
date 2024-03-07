@@ -1,5 +1,5 @@
 #!/bin/bash
-exec > >(tee /var/log/mount-fsx.log | logger -t mount-fsx -s 2>/dev/console) 2>&1
+exec > >(tee -a /var/log/mount-fsx.log | logger -t mount-fsx -s 2>/dev/console) 2>&1
 
 # mount the FSx for Lustre file system
 TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")

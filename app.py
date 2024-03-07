@@ -68,7 +68,7 @@ params.perfbench = PerfBench(
     env=environment
 )
 params.downloader = Downloader(
-    app, 'PerfBench-Downloader', params=params.perfbench.params,
+    app, 'ONT-PerfBench-Downloader', params=params.perfbench.params,
     description='EC2 instance for automated download of performance test data set.',
     env=environment
 )
