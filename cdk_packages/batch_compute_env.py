@@ -133,6 +133,34 @@ class BatchComputeEnv(Construct):
             )
             self.compute_environments.append(compute_environment)
 
+            # Add spot compute environment for p5.48xlarge instance type
+            if instance_type == 'p5.48xlarge':
+                compute_environment = batch.CfnComputeEnvironment(
+                    self, instance_type.replace('.', '-') + '-spot',
+                    type='MANAGED',
+                    state='ENABLED',
+                    compute_environment_name=instance_type.replace('.', '-') + '-spot',
+                    compute_resources=batch.CfnComputeEnvironment.ComputeResourcesProperty(
+                        type='SPOT',
+                        instance_types=[instance_type],
+                        allocation_strategy='BEST_FIT_PROGRESSIVE',
+                        bid_percentage=100,
+                        minv_cpus=0,
+                        maxv_cpus=4000,
+                        subnets=params.network.subnets.subnet_ids,
+                        security_group_ids=[
+                            sg_outbound.security_group_id,
+                            sg_fsx_lustre_clients.security_group_id,
+                        ],
+                        instance_role=ec2_instance_profile.attr_arn,
+                        launch_template=batch.CfnComputeEnvironment.LaunchTemplateSpecificationProperty(
+                            launch_template_id=params.base_ami.launch_template.launch_template_id,
+                            version='$Default'
+                        ),
+                    )
+                )
+                self.compute_environments.append(compute_environment)
+
         # Publish the list of compute environment names in Parameter Store. Other
         # tools can get the list of compute environments dedicated for the performance
         # benchmarks (e.g. scripts to automate batch jobs creation) from Parameter Store.
@@ -246,11 +274,6 @@ def get_instance_types():
         if 'NextToken' not in results:
             break
         describe_args['NextToken'] = results['NextToken']
-
-        # Remove p5.48xlarge instance type. As of 2023-07-28 this instance type cannot yet be used as AWS Batch
-        # compute environment instance type.   TODO: validate this
-        if 'p5.48xlarge' in instance_types:
-            instance_types.pop('p5.48xlarge')
 
     return instance_types
 

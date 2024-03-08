@@ -43,8 +43,3 @@ class PerfBench(cdk.Stack):
         self.params.batch_job_queues = BatchJobQueues(self, 'BatchJobQueues', params=self.params)
         self.params.report = Report(self, 'Report', params=self.params)
         self.params.status_parameters = StatusParameters(self, 'StatusParameters', params=self.params)
-
-        # cdk.CfnOutput(self, "ONTBaseAMIPipelineARN",
-        #               value=self.params.base_ami.ami_pipeline.attr_arn)
-        # cdk.CfnOutput(self, "ONTBasecallerContainerPipelineARN",
-        #               value=self.params.basecaller_container.container_pipeline.attr_arn)

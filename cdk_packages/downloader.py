@@ -77,20 +77,32 @@ class Downloader(cdk.Stack):
             string_value=create_test_data_sets_script.s3_object_url
         ).grant_read(self.ec2_instance_role)
 
+        # store downloader script in S3 bucket
+        file = Asset(
+            self, 'Downloader script',
+            path=os.path.join(dirname, 'assets', 'download_files.sh')
+        )
+        file.grant_read(self.ec2_instance_role)
+        ssm.StringParameter(
+            self, 'SSM parameter Downloader script',
+            parameter_name='/ONT-performance-benchmark/download-script',
+            string_value=file.s3_object_url
+        ).grant_read(self.ec2_instance_role)
+
         # Instance that downloads the FAST5 files from ONT and converts them to POD5 format
         self.downloader_instance = ec2.Instance(
             self, 'downloader',
             instance_type=ec2.InstanceType('c6g.4xlarge'),  # Arm-based AWS Graviton2 processors
             machine_image=ec2.MachineImage.generic_linux({
-                'us-west-2': 'ami-03f6bd8c9c6230968'  # Canonical, Ubuntu, 22.04 LTS, arm64 jammy image
-                # build on 2023-03-03   TODO: update
+                'us-west-2': 'ami-012bf399e76fe4368'  # Canonical, Ubuntu, 22.04 LTS, arm64 jammy image
+                # build on 2024-03-01
             }),
             vpc=params.network.vpc,
             require_imdsv2=True,
             role=self.ec2_instance_role,
             block_devices=[
                 ec2.BlockDevice(
-                    device_name='/dev/sda1',
+                    device_name='/dev/xvda',
                     volume=ec2.BlockDeviceVolume.ebs(
                         30,
                         volume_type=ec2.EbsDeviceVolumeType.GP3,
@@ -105,7 +117,7 @@ class Downloader(cdk.Stack):
 
         # Instance startup script (UserData)
         self.downloader_instance.user_data.add_commands(
-            open(os.path.join(os.path.dirname(__file__), 'assets', 'download_files.sh')).read()
+            open(os.path.join(os.path.dirname(__file__), 'assets', 'launcher.sh')).read()
         )
 
         params.data.ssm_parameter_data_s3_bucket.grant_read(self.ec2_instance_role)

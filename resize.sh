@@ -2,7 +2,7 @@
 
 # source: https://docs.aws.amazon.com/cloud9/latest/user-guide/move-environment.html?ref=weekly.elfitz.com#move-environment-resize
 
-# Specify the desired volume size in GiB as a command line argument. If not specified, default to 20 GiB.
+# Specify the desired volume size in GiB as a command line argument. If not specified, default to 70 GiB.
 SIZE=${1:-70}
 
 # Get the ID of the environment host Amazon EC2 instance.

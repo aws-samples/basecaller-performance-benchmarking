@@ -52,9 +52,9 @@ phases:
               apt-get update
               apt-get install -y cmake build-essential wget libsz2 python3-pip samtools libjson-perl
               pip install pod5_format_tools pod5
-              wget -q https://cdn.oxfordnanoportal.com/software/analysis/dorado-0.4.3-linux-x64.tar.gz -O dorado.tar.gz 
+              wget -q https://cdn.oxfordnanoportal.com/software/analysis/dorado-0.5.3-linux-x64.tar.gz -O dorado.tar.gz
               tar -xzf dorado.tar.gz
-              mv dorado-0.4.3*linux* /usr/local/dorado
+              mv dorado-*linux* /usr/local/dorado
               ln -s /usr/local/dorado/bin/dorado /usr/local/bin/
               mkdir -p /usr/local/dorado/models
               cd /usr/local/dorado/models
@@ -69,12 +69,12 @@ phases:
         action: S3Download
         inputs:
           - source: '{{ S3PathBasecallerRunScript }}'
-            destination: basecaller.sh
+            destination: /basecaller.sh
       - name: ChmodBasecallerRunScript
         action: ExecuteBash
         inputs:
           commands:
-            - chmod +x basecaller.sh
+            - chmod +x /basecaller.sh
 
   - name: validate
     steps:
