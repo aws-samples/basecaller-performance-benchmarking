@@ -4,4 +4,4 @@ FROM {{{ imagebuilder:parentImage }}}
 
 {{{ imagebuilder:components }}}
 
-ENTRYPOINT ["./basecaller.sh"]
+ENTRYPOINT ["/basecaller.sh"]

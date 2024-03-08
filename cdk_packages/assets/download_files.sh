@@ -22,6 +22,7 @@ if [ ! -f "${INDICATOR}" ]; then
     #wget https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
     dpkg -i -E amazon-cloudwatch-agent.deb
     amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c ssm:/ONT-performance-benchmark/downloader-cloudwatch-agent-config
+    service awslogs start
     touch "${INDICATOR}"
 fi
 

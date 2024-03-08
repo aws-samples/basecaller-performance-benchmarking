@@ -69,12 +69,12 @@ phases:
         action: S3Download
         inputs:
           - source: '{{ S3PathBasecallerRunScript }}'
-            destination: basecaller.sh
+            destination: /basecaller.sh
       - name: ChmodBasecallerRunScript
         action: ExecuteBash
         inputs:
           commands:
-            - chmod +x basecaller.sh
+            - chmod +x /basecaller.sh
 
   - name: validate
     steps:
