@@ -147,15 +147,20 @@ def main():
 
     instance_types = ['g5.48xlarge', 'p3.16xlarge']
 
+    # test p5.48xlarge spot
+    instance_types = ['p5.48xlarge-spot']
+    aws_batch_env.instance_types['p5.48xlarge-spot'] = aws_batch_env.instance_types['p5.48xlarge']
+
+
     # create guppy jobs
-    create_jobs(instance_types, aws_batch_env, cmd=gupppy_no_modified_bases, tags='guppy, no modified bases')
-    create_jobs(instance_types, aws_batch_env, cmd=gupppy_modified_bases_5mCG, tags='guppy, modified bases 5mCG')
-    create_jobs(instance_types, aws_batch_env, cmd=gupppy_modified_bases_5mCG_5hmCG, tags='guppy, modified bases 5mCG & 5hmCG')
+    # create_jobs(instance_types, aws_batch_env, cmd=gupppy_no_modified_bases, tags='guppy, no modified bases')
+    # create_jobs(instance_types, aws_batch_env, cmd=gupppy_modified_bases_5mCG, tags='guppy, modified bases 5mCG')
+    # create_jobs(instance_types, aws_batch_env, cmd=gupppy_modified_bases_5mCG_5hmCG, tags='guppy, modified bases 5mCG & 5hmCG')
 
     # create dorado jobs
     create_jobs(instance_types, aws_batch_env, cmd=dorado_no_modified_bases, tags='dorado, no modified bases')
-    create_jobs(instance_types, aws_batch_env, cmd=dorado_modified_bases_5mCG, tags='dorado, modified bases 5mCG')
-    create_jobs(instance_types, aws_batch_env, cmd=dorado_modified_bases_5mCG_5hmCG, tags='dorado, modified bases 5mCG & 5hmCG')
+    # create_jobs(instance_types, aws_batch_env, cmd=dorado_modified_bases_5mCG, tags='dorado, modified bases 5mCG')
+    # create_jobs(instance_types, aws_batch_env, cmd=dorado_modified_bases_5mCG_5hmCG, tags='dorado, modified bases 5mCG & 5hmCG')
 
 
 if __name__ == '__main__':

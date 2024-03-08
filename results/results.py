@@ -142,7 +142,7 @@ def generate_chart_performance_samples_per_sec(results: pd.DataFrame):
         },
         text_auto='.2s',
         orientation='h',
-        height=len(instance_order) * 90, width=1200,
+        height=200 + len(instance_order) * 90, width=1200,
     )
     fig.update_traces(textposition='outside', cliponaxis=False)
     fig.update_layout(legend_traceorder='reversed')
@@ -185,7 +185,7 @@ def generate_chart_runtime_whg_30x(results: pd.DataFrame):
         },
         text_auto='.1f',
         orientation='h',
-        height=len(instance_order) * 90, width=1200,
+        height=200 + len(instance_order) * 90, width=1200,
     )
     fig.update_traces(textposition='outside', cliponaxis=False)
     fig.update_layout(legend_traceorder='reversed')
@@ -238,12 +238,12 @@ def generate_cost_tables(results: pd.DataFrame):
 
     # add additional columns for Excel file
     df_pivot.loc[:, 'num_gpus'] = df_pivot.apply(
-        lambda row: instance_specs[row.compute_environment[0]]['GpuInfo']['Gpus'][0]['Count'],
+        lambda row: instance_specs[row.compute_environment.iloc[0]]['GpuInfo']['Gpus'][0]['Count'],
         axis=1
     )
     df_pivot.loc[:, 'cost_per_hour'] = df_pivot.apply(
-        lambda row: instance_cost['instances'][row.cost_region[0]][row.compute_environment[0]]['cost_per_hour']
-        if instance_cost['instances'][row.cost_region[0]][row.compute_environment[0]]['cost_per_hour'] else None,
+        lambda row: instance_cost['instances'][row.cost_region.iloc[0]][row.compute_environment.iloc[0]]['cost_per_hour']
+        if instance_cost['instances'][row.cost_region.iloc[0]][row.compute_environment.iloc[0]]['cost_per_hour'] else None,
         axis=1
     )
 
