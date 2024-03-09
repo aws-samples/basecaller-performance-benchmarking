@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "Basecaller script started."
+
 container_start_time=$(date -u +"%Y-%m-%dT%H:%M:%S%:z")
 
 function get_container_value() {
@@ -89,6 +91,7 @@ if [ "$command" == "guppy_basecaller" ]; then
   basecaller_name="guppy"
   basecaller_version=$(guppy_basecaller --version | grep -oP "(?<=Version )[0-9]+\.[0-9]+\.[0-9]+")
   echo "basecaller: $basecaller_name v$basecaller_version"
+  # Do not place $parameters in quotation marks! Will cause "Unexpected token '[...]' on command-line" error.
   guppy_basecaller $parameters |& tee guppy_basecaller.log
   ret="${PIPESTATUS[0]}"
 fi

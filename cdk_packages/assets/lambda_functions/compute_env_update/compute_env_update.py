@@ -8,10 +8,10 @@ import traceback
 
 import boto3
 
-# Path to a JSON file with all instance types deployed in AWS Batch
-# compute environments. This file is generated dynamically during deployment
+# Path to a JSON file with all AWS Batch compute environments.
+# This file is generated dynamically during CDK deployment
 # of the performance benchmark environment.
-BATCH_COMPUTE_ENVIRONMENTS = '/ONT-performance-benchmark/aws-batch-compute-environments'
+BATCH_INSTANCE_TYPES = '/ONT-performance-benchmark/aws-batch-instance-types'
 BATCH_LAUNCH_TEMPLATE = '/ONT-performance-benchmark/aws-batch-launch-template'
 # AMI_IMAGE_DESCRIPTION = 'ONT Performance Benchmark AMI'
 
@@ -23,7 +23,7 @@ ssm_client = boto3.client('ssm')
 batch_client = boto3.client('batch')
 ec2_client = boto3.client('ec2')
 
-param = ssm_client.get_parameter(Name=BATCH_COMPUTE_ENVIRONMENTS)
+param = ssm_client.get_parameter(Name=BATCH_INSTANCE_TYPES)
 lt = ssm_client.get_parameter(Name=BATCH_LAUNCH_TEMPLATE)['Parameter']['Value']
 
 
@@ -54,12 +54,12 @@ def lambda_handler(event=None, context=None):
 def update_compute_environments(event, context):
     lt_id = get_launch_template_id(event)
     if lt == lt_id:
-        instance_types = get_aws_batch_compute_environments()
+        compute_environments = get_aws_batch_compute_environments()
         LOGGER.info(f'Current configuration of launch template "{lt}":')
         lt_config = ec2_client.describe_launch_template_versions(LaunchTemplateId=lt)
         LOGGER.info(json.dumps(lt_config['LaunchTemplateVersions'], default=str))
-        for instance_type in instance_types:
-            update_compute_environment(instance_type.replace('.', '-'))
+        for compute_environment in compute_environments:
+            update_compute_environment(compute_environment)
 
 
 def get_launch_template_id(event):
@@ -79,7 +79,13 @@ def get_aws_batch_compute_environments():
         Key=param['Parameter']['Value'].split('/')[3]
     )
     instance_types = json.loads(file_obj['Body'].read().decode('utf-8'))
-    return instance_types
+    compute_environments = []
+    for instance_type in instance_types:
+        if 'EC2' in instance_type['ProvisioningModel'].keys():
+            compute_environments.append(instance_type['ProvisioningModel']['EC2'])
+        if 'SPOT' in instance_type['ProvisioningModel'].keys():
+            compute_environments.append(instance_type['ProvisioningModel']['SPOT'])
+    return compute_environments
 
 
 def update_compute_environment(env_name):
