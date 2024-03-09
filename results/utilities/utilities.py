@@ -30,7 +30,7 @@ def get_data(ssm_parameter_name: str):
     ) as e:
         pass
     else:
-        # save results to file, we do this to preserve results in case the DynamoDB table has been deleted
+        # save results to file, we do this to preserve results in case the DynamoDB is deleted
         df.to_hdf(f'results_table_{results_table}.h5', key='df', mode='w')
     # Load and join all saved result tables. This merges all results from different DynamoDB tables in case
     # environments gets repeatedly deployed and the name of the DynamoDB tables changes with each deployment.

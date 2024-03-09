@@ -63,7 +63,7 @@ class ImageBuilder(Construct):
             instance_profile_name=self.ec2_instance_profile.instance_profile_name,
             name='ONT image infrastructure',
             description='ONT image infrastructure',
-            terminate_instance_on_failure=False,
+            terminate_instance_on_failure=True,
             instance_metadata_options=imagebuilder.CfnInfrastructureConfiguration.InstanceMetadataOptionsProperty(
                 http_put_response_hop_limit=4,
                 http_tokens='required',

@@ -4,18 +4,13 @@
 Generate ONT basecaller jobs for AWS Batch.
 """
 
-import uuid
-from string import Template
-
 import boto3
 
-from basecaller_batch.basecaller_batch import BasecallerBatch
-from basecaller_batch.basecaller_batch import create_jobs
-from test_data.test_data import TestData
+from basecaller_batch.basecaller_batch import BasecallerBatch, create_batch_jobs
 
 ssm_client = boto3.client('ssm')
 
-# aws_batch_env.terminate_all_jobs()
+# aws_batch_env.terminate_all_jobs()  # <-- run this command to delete all running batch jobs
 
 gupppy_no_modified_bases = \
     'guppy_basecaller ' \
@@ -105,8 +100,6 @@ def environment_is_ready():
     return download_status == 'completed' and pod5_converter_status == 'completed'
 
 
-
-
 def main():
     if not environment_is_ready():
         print(f'The benchmark environment is not ready. Please try again later.')
@@ -123,18 +116,19 @@ def main():
 
     # test p5.48xlarge spot
     compute = [
-        {'instance_type': 'p5.48xlarge', 'provisioning_model': 'SPOT'},
+        # {'instance_type': 'p5.48xlarge', 'provisioning_model': 'SPOT'},
+        {'instance_type': 'g5.48xlarge', 'provisioning_model': 'SPOT'},
     ]
 
     # create guppy jobs
-    # create_jobs(compute, aws_batch_env, cmd=gupppy_no_modified_bases, tags='guppy, no modified bases')
-    # create_jobs(compute, aws_batch_env, cmd=gupppy_modified_bases_5mCG, tags='guppy, modified bases 5mCG')
-    # create_jobs(compute, aws_batch_env, cmd=gupppy_modified_bases_5mCG_5hmCG, tags='guppy, modified bases 5mCG & 5hmCG')
+    # create_batch_jobs(compute, aws_batch_env, cmd=gupppy_no_modified_bases, tags='guppy, no modified bases')
+    # create_batch_jobs(compute, aws_batch_env, cmd=gupppy_modified_bases_5mCG, tags='guppy, modified bases 5mCG')
+    # create_batch_jobs(compute, aws_batch_env, cmd=gupppy_modified_bases_5mCG_5hmCG, tags='guppy, modified bases 5mCG & 5hmCG')
 
     # create dorado jobs
-    create_jobs(compute, aws_batch_env, cmd=dorado_no_modified_bases, tags='dorado, no modified bases')
-    # create_jobs(compute, aws_batch_env, cmd=dorado_modified_bases_5mCG, tags='dorado, modified bases 5mCG')
-    # create_jobs(compute, aws_batch_env, cmd=dorado_modified_bases_5mCG_5hmCG, tags='dorado, modified bases 5mCG & 5hmCG')
+    create_batch_jobs(compute, aws_batch_env, cmd=dorado_no_modified_bases, tags='dorado, no modified bases')
+    # create_batch_jobs(compute, aws_batch_env, cmd=dorado_modified_bases_5mCG, tags='dorado, modified bases 5mCG')
+    # create_batch_jobs(compute, aws_batch_env, cmd=dorado_modified_bases_5mCG_5hmCG, tags='dorado, modified bases 5mCG & 5hmCG')
 
 
 if __name__ == '__main__':

@@ -8,10 +8,12 @@ environment.
 """
 
 import json
+import uuid
+from string import Template
 
 import boto3
 
-from create_jobs.test_data.test_data import TestData
+from .test_data import TestData
 
 ssm_client = boto3.client('ssm')
 s3_client = boto3.client('s3')
@@ -216,7 +218,7 @@ def get_job_definitions():
     return job_definitions
 
 
-def create_jobs(compute: list, aws_batch_env: BasecallerBatch, cmd: str = '', tags: str = ''):
+def create_batch_jobs(compute: list, aws_batch_env: BasecallerBatch, cmd: str = '', tags: str = ''):
     test_data = TestData()
     test_data.load_pod5_subsets()
     params_templ = Template(cmd)

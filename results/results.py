@@ -12,7 +12,7 @@ import aws_pricing.aws_pricing as aws_pricing
 import utilities.utilities as utils
 
 print('Loading instance specifications ...')
-instance_specs = utils.get_instance_specs('/ONT-performance-benchmark/aws-batch-compute-environments')
+instance_specs = utils.get_instance_specs('/ONT-performance-benchmark/aws-batch-instance-types')
 print('Getting pricing for EC2 instance types ...')
 instance_cost = aws_pricing.get_pricing(list(instance_specs.keys()))
 

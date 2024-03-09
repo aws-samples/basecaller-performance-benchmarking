@@ -13,7 +13,6 @@ import boto3
 # of the performance benchmark environment.
 BATCH_INSTANCE_TYPES = '/ONT-performance-benchmark/aws-batch-instance-types'
 BATCH_LAUNCH_TEMPLATE = '/ONT-performance-benchmark/aws-batch-launch-template'
-# AMI_IMAGE_DESCRIPTION = 'ONT Performance Benchmark AMI'
 
 LOGGER = logging.getLogger()
 LOGGER.setLevel(logging.INFO)
@@ -81,10 +80,10 @@ def get_aws_batch_compute_environments():
     instance_types = json.loads(file_obj['Body'].read().decode('utf-8'))
     compute_environments = []
     for instance_type in instance_types:
-        if 'EC2' in instance_type['ProvisioningModel'].keys():
-            compute_environments.append(instance_type['ProvisioningModel']['EC2'])
-        if 'SPOT' in instance_type['ProvisioningModel'].keys():
-            compute_environments.append(instance_type['ProvisioningModel']['SPOT'])
+        if 'EC2' in instance_types[instance_type]['ProvisioningModel'].keys():
+            compute_environments.append(instance_types[instance_type]['ProvisioningModel']['EC2'])
+        if 'SPOT' in instance_types[instance_type]['ProvisioningModel'].keys():
+            compute_environments.append(instance_types[instance_type]['ProvisioningModel']['SPOT'])
     return compute_environments
 
 
