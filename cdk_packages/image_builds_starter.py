@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 
+import json
 import os.path
 import re
-import json
 
 import aws_cdk as cdk
 import boto3
@@ -81,8 +81,19 @@ class ImageBuildStarter(Construct):
                 ],
                 resources=[
                     f'arn:aws:imagebuilder:{region}:{account}:image/*',
-                    f'arn:aws:imagebuilder:{region}:{account}:image-pipeline/ont-*'
                 ],
+            )
+        )
+        self.start_image_build.role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    'imagebuilder:ListImages',
+                    'imagebuilder:ListImageBuildVersions',
+                    'imagebuilder:DeleteImage',
+                    'imagebuilder:StartImagePipelineExecution',
+                ],
+                resources=params.base_ami.pipeline_arns + params.basecaller_container.pipeline_arns,
             )
         )
 
@@ -92,10 +103,8 @@ class ImageBuildStarter(Construct):
             self, 'SSM parameter image build pipelines',
             parameter_name='/ONT-performance-benchmark/image-build-pipelines',
             string_value=json.dumps({
-                    'pipelines': [
-                        params.base_ami.ami_pipeline.attr_arn,
-                        params.basecaller_container.container_pipeline.attr_arn
-                    ]}
+                'pipelines': params.base_ami.pipeline_arns + params.basecaller_container.pipeline_arns
+            }
             )
         ).grant_read(self.start_image_build.role)
 
@@ -131,9 +140,20 @@ class ImageBuildStarter(Construct):
                     'appliesTo': [
                         f'Resource::arn:aws:logs:{region}:{account}:*',
                         f'Resource::arn:aws:cloudformation:{region}:{account}:stack/{cdk.Stack.of(self).stack_name}*',
-                        f'Resource::arn:aws:imagebuilder:{region}:{account}:image-pipeline/ont-*',
                         f'Resource::arn:aws:imagebuilder:{region}:{account}:image/*',
                     ]
+                }
+            ],
+            apply_to_children=True,
+        )
+
+        NagSuppressions.add_resource_suppressions(
+            construct=self.start_image_build.role,
+            suppressions=[
+                {
+                    'id': 'AwsSolutions-IAM5',
+                    'reason': 'Resource ARNs reasonably narrowed down.',
+                    'appliesTo': params.base_ami.pipeline_arns + params.basecaller_container.pipeline_arns
                 }
             ],
             apply_to_children=True,

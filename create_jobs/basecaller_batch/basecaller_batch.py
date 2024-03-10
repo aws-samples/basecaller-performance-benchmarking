@@ -25,7 +25,38 @@ account_id = boto3.client('sts').get_caller_identity().get('Account')
 # compute environments. This file is generated dynamically during deployment
 # of the performance benchmark environment.
 SSM_PARAMETER_STORE_INSTANCE_TYPES = '/ONT-performance-benchmark/aws-batch-instance-types'
-BASECALLER_DOCKER_IMAGE = f'{account_id}.dkr.ecr.{aws_region_name}.amazonaws.com/basecaller:latest'
+BASECALLER_DORADO_0_3_0 = f'{account_id}.dkr.ecr.{aws_region_name}.amazonaws.com/basecaller_guppy_latest_dorado0.3.0:latest'
+BASECALLER_DORADO_0_5_3 = f'{account_id}.dkr.ecr.{aws_region_name}.amazonaws.com/basecaller_guppy_latest_dorado0.5.3:latest'
+BASECALLER_DOCKER_IMAGE = BASECALLER_DORADO_0_5_3
+
+CONTAINER_PROPERTIES_TEMPLATE = {
+    'image': '',
+    'resourceRequirements': [
+        {'type': 'VCPU', 'value': ''},
+        {'type': 'GPU', 'value': ''},
+        {'type': 'MEMORY', 'value': ''},
+    ],
+    'volumes': [
+        {
+            'host': {'sourcePath': '/fsx'},
+            'name': 'FSx-for-Lustre'
+        },
+        {
+            'host': {'sourcePath': '/usr/local/bin'},
+            'name': 'usr_local_bin'
+        },
+    ],
+    'mountPoints': [
+        {
+            'containerPath': '/fsx',
+            'sourceVolume': 'FSx-for-Lustre'
+        },
+        {
+            'containerPath': '/host/bin',
+            'sourceVolume': 'usr_local_bin'
+        },
+    ],
+}
 
 
 class BasecallerBatch:
@@ -43,7 +74,6 @@ class BasecallerBatch:
             'p4d.24xlarge',
         ]
         self.instance_types = get_aws_batch_instance_types()
-        # self.compute_environments = get_aws_batch_compute_environments()
         self.job_definitions = get_job_definitions()
         self.create_missing_job_definitions()
 
@@ -82,40 +112,18 @@ class BasecallerBatch:
             memory = int(
                 instance_types[job_definition['instance_type']]['MemoryInfo'][
                     'SizeInMiB'] * 0.9)  # reserve max. 90% of memory for tasks
+            container_properties = CONTAINER_PROPERTIES_TEMPLATE
+            container_properties['image'] = BASECALLER_DOCKER_IMAGE
+            container_properties['resourceRequirements'][0]['value'] = str(vcpus)
+            container_properties['resourceRequirements'][1]['value'] = str(gpus)
+            container_properties['resourceRequirements'][2]['value'] = str(memory)
             batch_job_definition = batch_client.register_job_definition(
                 jobDefinitionName=job_definition['job_definition_name'],
                 type='container',
                 parameters={
                     'tags': ''
                 },
-                containerProperties={
-                    'image': BASECALLER_DOCKER_IMAGE,
-                    'resourceRequirements': [
-                        {'type': 'VCPU', 'value': str(vcpus)},
-                        {'type': 'GPU', 'value': str(gpus)},
-                        {'type': 'MEMORY', 'value': str(memory)},
-                    ],
-                    'volumes': [
-                        {
-                            'host': {'sourcePath': '/fsx'},
-                            'name': 'FSx-for-Lustre'
-                        },
-                        {
-                            'host': {'sourcePath': '/usr/local/bin'},
-                            'name': 'usr_local_bin'
-                        },
-                    ],
-                    'mountPoints': [
-                        {
-                            'containerPath': '/fsx',
-                            'sourceVolume': 'FSx-for-Lustre'
-                        },
-                        {
-                            'containerPath': '/host/bin',
-                            'sourceVolume': 'usr_local_bin'
-                        },
-                    ],
-                }
+                containerProperties=container_properties
             )
             self.job_definitions[job_definition['job_definition_name']] = batch_job_definition
 
@@ -125,8 +133,9 @@ class BasecallerBatch:
         Job definitions are re-created when an object is instanced from class BasecallerBatch.
         """
         for job_definition in self.job_definitions:
+            print(f'Deleting job definition "{job_definition}" ...')
             job_definition_details = batch_client.describe_job_definitions(
-                jobDefinitionName=job_definition['jobDefinitionName'],
+                jobDefinitionName=job_definition,
                 status='ACTIVE'
             )
             for item in job_definition_details['jobDefinitions']:
@@ -195,20 +204,6 @@ def get_aws_batch_instance_types():
     )
     instance_types = json.loads(file_obj['Body'].read().decode('utf-8'))
     return instance_types
-
-
-# def get_aws_batch_compute_environments():
-#     """
-#     Read list of AWS Batch compute environments. The list is stored as JSON file
-#     on S3. The list is generated during the CDK deployment of the AWS Batch environment.
-#     """
-#     param = ssm_client.get_parameter(Name=SSM_PARAMETER_STORE_COMPUTE_ENVIRONMENTS)
-#     file_obj = s3_client.get_object(
-#         Bucket=param['Parameter']['Value'].split('/')[2],
-#         Key=param['Parameter']['Value'].split('/')[3]
-#     )
-#     compute_environments = json.loads(file_obj['Body'].read().decode('utf-8'))
-#     return compute_environments
 
 
 def get_job_definitions():

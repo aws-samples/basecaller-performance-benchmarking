@@ -27,7 +27,6 @@ def main():
     results = filter_results(results)
     print('Processing results ...')
     results = utils.transform_samples_per_s(results)
-    # results = utils.transform_compute_environment(results)
     results = utils.add_basecaller_label(results)
     results = utils.add_data_set_id(results)
     results = utils.add_gpu_count(results, instance_specs)
