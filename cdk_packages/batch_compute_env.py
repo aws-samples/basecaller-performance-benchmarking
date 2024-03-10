@@ -38,7 +38,7 @@ class BatchComputeEnv(Construct):
             assumed_by=iam.ServicePrincipal("ec2.amazonaws.com"),
             description="Role for EC2 instance created by AWS Batch",
         )
-        ec2_instance_profile = iam.CfnInstanceProfile(
+        self.ec2_instance_profile = iam.CfnInstanceProfile(
             self, "AWS Batch EC2 container instance profile",
             roles=[self.ec2_instance_role.role_name],
         )
@@ -77,7 +77,7 @@ class BatchComputeEnv(Construct):
         )
 
         # Allow outbound communication
-        sg_outbound = ec2.SecurityGroup(
+        self.sg_outbound = ec2.SecurityGroup(
             self, 'SG outbound communication',
             vpc=params.network.vpc,
             description='SG outbound communication',
@@ -86,95 +86,54 @@ class BatchComputeEnv(Construct):
 
         # Security groups for FSx for Lustre. Rules are based on
         # https://docs.aws.amazon.com/fsx/latest/LustreGuide/limit-access-security-groups.html
-        sg_fsx_lustre_clients = ec2.SecurityGroup(
+        self.sg_fsx_lustre_clients = ec2.SecurityGroup(
             self, 'SG FSx for Lustre clients',
             vpc=params.network.vpc,
             description='FSx for Lustre clients',
             allow_all_outbound=False
         )
         # Inbound rules for FSx for Lustre clients.
-        sg_fsx_lustre_clients.add_ingress_rule(
+        self.sg_fsx_lustre_clients.add_ingress_rule(
             ec2.Peer.ipv4(params.network.vpc.vpc_cidr_block),
             ec2.Port.tcp_range(988, 1023), 'Allows Lustre traffic'
         )
         # Outbound rules for FSx for Lustre clients.
-        sg_fsx_lustre_clients.add_egress_rule(
+        self.sg_fsx_lustre_clients.add_egress_rule(
             ec2.Peer.ipv4(params.network.vpc.vpc_cidr_block),
             ec2.Port.tcp_range(988, 1023), 'Allows Lustre traffic'
         )
 
-        # Create one compute environment for each instance type that supports x86_64 architecture
-        # and has an NVIDIA GPU.
+        # For each instance type that supports x86_64 architecture and has an NVIDIA GPU create
+        # an on-demand compute environment. Optional, create a spot compute environment.
         self.compute_environments = []
+        map_compute_environment_instance_type = {}
         self.instance_types = get_instance_types()
         for instance_type in self.instance_types.keys():
-            compute_environment = batch.CfnComputeEnvironment(
-                self, instance_type.replace('.', '-'),
-                type='MANAGED',
-                state='ENABLED',
-                compute_environment_name=instance_type.replace('.', '-'),
-                compute_resources=batch.CfnComputeEnvironment.ComputeResourcesProperty(
-                    type='EC2',
-                    instance_types=[instance_type],
-                    allocation_strategy='BEST_FIT_PROGRESSIVE',
-                    minv_cpus=0,
-                    maxv_cpus=4000,
-                    subnets=params.network.subnets.subnet_ids,
-                    security_group_ids=[
-                        sg_outbound.security_group_id,
-                        sg_fsx_lustre_clients.security_group_id,
-                    ],
-                    instance_role=ec2_instance_profile.attr_arn,
-                    launch_template=batch.CfnComputeEnvironment.LaunchTemplateSpecificationProperty(
-                        launch_template_id=params.base_ami.launch_template.launch_template_id,
-                        version='$Default'
-                    ),
-                )
-            )
-            self.compute_environments.append(compute_environment)
-
-            # Add spot compute environment for p5.48xlarge instance type
-            if instance_type == 'p5.48xlarge':
-                compute_environment = batch.CfnComputeEnvironment(
-                    self, instance_type.replace('.', '-') + '-spot',
-                    type='MANAGED',
-                    state='ENABLED',
-                    compute_environment_name=instance_type.replace('.', '-') + '-spot',
-                    compute_resources=batch.CfnComputeEnvironment.ComputeResourcesProperty(
-                        type='SPOT',
-                        instance_types=[instance_type],
-                        allocation_strategy='BEST_FIT_PROGRESSIVE',
-                        bid_percentage=100,
-                        minv_cpus=0,
-                        maxv_cpus=4000,
-                        subnets=params.network.subnets.subnet_ids,
-                        security_group_ids=[
-                            sg_outbound.security_group_id,
-                            sg_fsx_lustre_clients.security_group_id,
-                        ],
-                        instance_role=ec2_instance_profile.attr_arn,
-                        launch_template=batch.CfnComputeEnvironment.LaunchTemplateSpecificationProperty(
-                            launch_template_id=params.base_ami.launch_template.launch_template_id,
-                            version='$Default'
-                        ),
-                    )
-                )
+            if 'EC2' in self.instance_types[instance_type]['ProvisioningModel']:
+                compute_environment = self.get_ec2_compute_env(instance_type, params)
+                self.instance_types[instance_type]['ProvisioningModel']['EC2'] = compute_environment.compute_environment_name
                 self.compute_environments.append(compute_environment)
+                # map_compute_environment_instance_type[compute_environment.compute_environment_name] = instance_type
+            if 'SPOT' in self.instance_types[instance_type]['ProvisioningModel']:
+                compute_environment = self.get_spot_compute_env(instance_type, params)
+                self.compute_environments.append(compute_environment)
+                self.instance_types[instance_type]['ProvisioningModel']['SPOT'] = compute_environment.compute_environment_name
+                # map_compute_environment_instance_type[compute_environment.compute_environment_name] = instance_type
 
-        # Publish the list of compute environment names in Parameter Store. Other
-        # tools can get the list of compute environments dedicated for the performance
+        # Publish the list of instance types deployed as AWS Batch compute environments in Parameter Store. Other
+        # tools can get the list of instance types dedicated for the performance
         # benchmarks (e.g. scripts to automate batch jobs creation) from Parameter Store.
         with tempfile.NamedTemporaryFile(suffix='.json', mode='w') as temp:
             json.dump(self.instance_types, temp)
             temp.flush()  # force the data to be written to the temp file
             file_asset = Asset(
-                self, 'compute environments instance types',
+                self, 'instance types',
                 path=temp.name
             )
         file_asset.grant_read(params.compute_env_update.update_compute_environments)
         ssm.StringParameter(
-            self, 'SSM parameter AWS Batch compute environments',
-            parameter_name='/ONT-performance-benchmark/aws-batch-compute-environments',
+            self, 'SSM parameter AWS Batch instance types',
+            parameter_name='/ONT-performance-benchmark/aws-batch-instance-types',
             string_value=file_asset.s3_object_url,
         ).grant_read(params.compute_env_update.update_compute_environments)
         ssm.StringParameter(
@@ -240,7 +199,7 @@ class BatchComputeEnv(Construct):
         )
 
         NagSuppressions.add_resource_suppressions(
-            construct=sg_fsx_lustre_clients,
+            construct=self.sg_fsx_lustre_clients,
             suppressions=[
                 {
                     'id': 'CdkNagValidationFailure',
@@ -254,12 +213,71 @@ class BatchComputeEnv(Construct):
             apply_to_children=True,
         )
 
+    def get_ec2_compute_env(self, instance_type, params):
+        return batch.CfnComputeEnvironment(
+            self, instance_type.replace('.', '-'),
+            type='MANAGED',
+            state='ENABLED',
+            compute_environment_name=instance_type.replace('.', '-'),
+            compute_resources=batch.CfnComputeEnvironment.ComputeResourcesProperty(
+                type='EC2',
+                instance_types=[instance_type],
+                allocation_strategy='BEST_FIT_PROGRESSIVE',
+                minv_cpus=0,
+                maxv_cpus=4000,
+                subnets=params.network.subnets.subnet_ids,
+                security_group_ids=[
+                    self.sg_outbound.security_group_id,
+                    self.sg_fsx_lustre_clients.security_group_id,
+                ],
+                instance_role=self.ec2_instance_profile.attr_arn,
+                launch_template=batch.CfnComputeEnvironment.LaunchTemplateSpecificationProperty(
+                    launch_template_id=params.base_ami.launch_template.launch_template_id,
+                    version='$Default'
+                ),
+            )
+        )
+
+    def get_spot_compute_env(self, instance_type, params):
+        return batch.CfnComputeEnvironment(
+            self, instance_type.replace('.', '-') + '-spot',
+            type='MANAGED',
+            state='ENABLED',
+            compute_environment_name=instance_type.replace('.', '-') + '-spot',
+            compute_resources=batch.CfnComputeEnvironment.ComputeResourcesProperty(
+                type='SPOT',
+                instance_types=[instance_type],
+                allocation_strategy='BEST_FIT_PROGRESSIVE',
+                bid_percentage=100,
+                minv_cpus=0,
+                maxv_cpus=4000,
+                subnets=params.network.subnets.subnet_ids,
+                security_group_ids=[
+                    self.sg_outbound.security_group_id,
+                    self.sg_fsx_lustre_clients.security_group_id,
+                ],
+                instance_role=self.ec2_instance_profile.attr_arn,
+                launch_template=batch.CfnComputeEnvironment.LaunchTemplateSpecificationProperty(
+                    launch_template_id=params.base_ami.launch_template.launch_template_id,
+                    version='$Default'
+                ),
+            )
+        )
+
 
 def get_instance_types():
     """
     Get instance types with filter.
     """
 
+    # List of instance types for which we create spot compute environments in AWS Batch.
+    spot_instance_types = [
+        'p5.48xlarge',
+        'p4d.24xlarge',
+        'p3dn.24xlarge', 'p3.16xlarge', 'p3.8xlarge', 'p3.2xlarge',
+        'g5.xlarge', 'g5.2xlarge', 'g5.12xlarge', 'g5.24xlarge', 'g5.48xlarge',
+        'g4dn.metal', 'g4dn.12xlarge',
+    ]
     instance_types = {}
     describe_args = {}
     while True:
@@ -270,7 +288,12 @@ def get_instance_types():
                 'VCpuInfo': result['VCpuInfo'],
                 'MemoryInfo': result['MemoryInfo'],
                 'GpuInfo': result['GpuInfo'],
+                'ProvisioningModel': {
+                    'EC2': '',  # EC2 = on-demand is the default provisioning model
+                },
             }
+            if result['InstanceType'] in spot_instance_types:
+                instance_types[result['InstanceType']]['ProvisioningModel']['SPOT'] = ''
         if 'NextToken' not in results:
             break
         describe_args['NextToken'] = results['NextToken']

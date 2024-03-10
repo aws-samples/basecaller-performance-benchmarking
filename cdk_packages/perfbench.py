@@ -16,6 +16,7 @@ from .image_builds_starter import ImageBuildStarter
 from .network import Network
 from .report import Report
 from .status_parameters import StatusParameters
+from .spot_interruption_notify import SpotInterruptionNotify
 
 
 class Params:
@@ -43,3 +44,4 @@ class PerfBench(cdk.Stack):
         self.params.batch_job_queues = BatchJobQueues(self, 'BatchJobQueues', params=self.params)
         self.params.report = Report(self, 'Report', params=self.params)
         self.params.status_parameters = StatusParameters(self, 'StatusParameters', params=self.params)
+        self.params.spot_interruption_notify = SpotInterruptionNotify(self, 'SpotInterruptionNotify', params=self.params)

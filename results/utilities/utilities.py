@@ -30,7 +30,7 @@ def get_data(ssm_parameter_name: str):
     ) as e:
         pass
     else:
-        # save results to file, we do this to preserve results in case the DynamoDB table has been deleted
+        # save results to file, we do this to preserve results in case the DynamoDB is deleted
         df.to_hdf(f'results_table_{results_table}.h5', key='df', mode='w')
     # Load and join all saved result tables. This merges all results from different DynamoDB tables in case
     # environments gets repeatedly deployed and the name of the DynamoDB tables changes with each deployment.
@@ -138,7 +138,7 @@ def add_display_label(df: pd.Series, instance_specs: dict):
 
 def add_gpu_count(df: pd.Series, instance_specs: dict):
     df.loc[:, 'num_gpus'] = df.apply(
-        lambda row: instance_specs[row.compute_environment]['GpuInfo']['Gpus'][0]['Count'],
+        lambda row: instance_specs[row.ec2_instance_type]['GpuInfo']['Gpus'][0]['Count'],
         axis=1
     )
     return df
@@ -214,14 +214,14 @@ def check_consistency(df: pd.DataFrame, instance_specs: dict):
 
 def aggregate_samples_per_s_runtime(df: pd.DataFrame):
     df = df[df['status'] == 'succeeded'] \
-        .groupby(['modified_bases', 'compute_environment', 'num_gpus', 'data_set_id', 'basecaller']) \
-        .agg({'samples_per_s': sum, 'container_run_time_h': 'mean'}) \
+        .groupby(['modified_bases', 'compute_environment', 'ec2_instance_type', 'num_gpus', 'data_set_id', 'basecaller']) \
+        .agg({'samples_per_s': 'sum', 'container_run_time_h': 'mean'}) \
         .reset_index()
     return df
 
 
 def create_y_label(row: pd.Series, instance_specs: dict):
-    instance_type = row.compute_environment.replace("-", ".")
+    instance_type = row.ec2_instance_type
     gpu_count = instance_specs[instance_type]['GpuInfo']['Gpus'][0]['Count']
     gpu_name = instance_specs[instance_type]['GpuInfo']['Gpus'][0]['Name']
     gpu_manufacturer = instance_specs[instance_type]['GpuInfo']['Gpus'][0]['Manufacturer']
@@ -259,8 +259,8 @@ def add_cost(df: pd.DataFrame, aws_pricing: dict):
         temp[['cost_region', 'cost_per_hour']] = df.apply(
             lambda row: (
                 region,
-                aws_pricing['instances'][region][row['compute_environment']]['cost_per_hour']
-                if aws_pricing['instances'][region][row['compute_environment']]['cost_per_hour'] else None
+                aws_pricing['instances'][region][row['ec2_instance_type']]['cost_per_hour']
+                if aws_pricing['instances'][region][row['ec2_instance_type']]['cost_per_hour'] else None
             ), axis=1, result_type='expand'
         )
         temp['cost_per_gigabase'] = temp[temp['runtime_type'] == 'per gigabase'].apply(

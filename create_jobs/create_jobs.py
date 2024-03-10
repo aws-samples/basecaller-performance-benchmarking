@@ -4,17 +4,13 @@
 Generate ONT basecaller jobs for AWS Batch.
 """
 
-import uuid
-from string import Template
-
 import boto3
 
-from basecaller_batch.basecaller_batch import BasecallerBatch
-from test_data.test_data import TestData
+from basecaller_batch.basecaller_batch import BasecallerBatch, create_batch_jobs
 
 ssm_client = boto3.client('ssm')
 
-# aws_batch_env.terminate_all_jobs()
+# aws_batch_env.terminate_all_jobs()  # <-- run this command to delete all running batch jobs
 
 gupppy_no_modified_bases = \
     'guppy_basecaller ' \
@@ -104,38 +100,6 @@ def environment_is_ready():
     return download_status == 'completed' and pod5_converter_status == 'completed'
 
 
-def create_jobs(instance_types: list, aws_batch_env: BasecallerBatch, cmd: str = '', tags: str = ''):
-    test_data = TestData()
-    test_data.load_pod5_subsets()
-    params_templ = Template(cmd)
-    for instance_type in instance_types:  # aws_batch_env.validated_instances:
-        max_vcpus = aws_batch_env.instance_types[instance_type]['VCpuInfo']['DefaultVCpus']
-        max_gpus = sum([gpu['Count'] for gpu in aws_batch_env.instance_types[instance_type]['GpuInfo']['Gpus']])
-        max_memory = int(
-            aws_batch_env.instance_types[instance_type]['MemoryInfo']['SizeInMiB'] * 0.9
-        )
-        file_lists = test_data.pod5_sample_data_subsets['wgs_subset_128_files'][max_gpus]  # 1 job per GPU
-        data_set_id = str(uuid.uuid4())  # unique identifier that allows to track which
-        # AWS batch jobs belong to the same data set
-        print('Generating AWS Batch jobs ...')
-        for file_list in file_lists:
-            params = params_templ.substitute(
-                file_list=file_list,
-                num_base_mod_threads=max_vcpus // max_gpus if (max_vcpus // max_gpus) <= 48 else 48
-            )
-            job_id = aws_batch_env.submit_basecaller_job(
-                instance_type=instance_type,
-                basecaller_params=params,
-                gpus=1,
-                vcpus=max_vcpus // max_gpus,
-                memory=max_memory // max_gpus,
-                tags=[tags],
-                data_set_id=data_set_id,
-            )
-            print(f'instance type: {instance_type}, tags: {tags}, file list: {file_list}, job ID: {job_id}')
-        print('Done. Check the status of the jobs in the AWS Batch console.')
-
-
 def main():
     if not environment_is_ready():
         print(f'The benchmark environment is not ready. Please try again later.')
@@ -145,17 +109,39 @@ def main():
 
     aws_batch_env = BasecallerBatch()
 
-    instance_types = ['g5.48xlarge', 'p3.16xlarge']
+    compute = [
+        {'instance_type': 'g5.48xlarge', 'provisioning_model': 'SPOT'},
+        {'instance_type': 'p3.16xlarge', 'provisioning_model': 'SPOT'},
+    ]
+
+    # Uncomment to run performance benchmark against a larger set of instance types.
+    # CAUTION: Please be aware of the cost implication of running a large number
+    # of large EC2 instances (e.g. p5)!
+    # compute = [
+    #     {'instance_type': 'p5.48xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g5.48xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'p4d.24xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'p3dn.24xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'p3.16xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'p3.8xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'p3.2xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g5.xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g5.2xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g5.12xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g5.24xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g4dn.metal', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g4dn.12xlarge', 'provisioning_model': 'SPOT'},
+    # ]
 
     # create guppy jobs
-    create_jobs(instance_types, aws_batch_env, cmd=gupppy_no_modified_bases, tags='guppy, no modified bases')
-    create_jobs(instance_types, aws_batch_env, cmd=gupppy_modified_bases_5mCG, tags='guppy, modified bases 5mCG')
-    create_jobs(instance_types, aws_batch_env, cmd=gupppy_modified_bases_5mCG_5hmCG, tags='guppy, modified bases 5mCG & 5hmCG')
+    create_batch_jobs(compute, aws_batch_env, cmd=gupppy_no_modified_bases, tags='guppy, no modified bases')
+    create_batch_jobs(compute, aws_batch_env, cmd=gupppy_modified_bases_5mCG, tags='guppy, modified bases 5mCG')
+    create_batch_jobs(compute, aws_batch_env, cmd=gupppy_modified_bases_5mCG_5hmCG, tags='guppy, modified bases 5mCG & 5hmCG')
 
     # create dorado jobs
-    create_jobs(instance_types, aws_batch_env, cmd=dorado_no_modified_bases, tags='dorado, no modified bases')
-    create_jobs(instance_types, aws_batch_env, cmd=dorado_modified_bases_5mCG, tags='dorado, modified bases 5mCG')
-    create_jobs(instance_types, aws_batch_env, cmd=dorado_modified_bases_5mCG_5hmCG, tags='dorado, modified bases 5mCG & 5hmCG')
+    create_batch_jobs(compute, aws_batch_env, cmd=dorado_no_modified_bases, tags='dorado, no modified bases')
+    create_batch_jobs(compute, aws_batch_env, cmd=dorado_modified_bases_5mCG, tags='dorado, modified bases 5mCG')
+    create_batch_jobs(compute, aws_batch_env, cmd=dorado_modified_bases_5mCG_5hmCG, tags='dorado, modified bases 5mCG & 5hmCG')
 
 
 if __name__ == '__main__':

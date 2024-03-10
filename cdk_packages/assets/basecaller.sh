@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "Basecaller script started."
+
 container_start_time=$(date -u +"%Y-%m-%dT%H:%M:%S%:z")
 
 function get_container_value() {
@@ -22,7 +24,9 @@ container_instance_arn=$(aws batch describe-jobs --jobs "$AWS_BATCH_JOB_ID" --qu
 tmp=${container_instance_arn#*/}
 cluster_name=${tmp%/*}
 ec2_instance_id=$(aws ecs describe-container-instances --container-instances "$container_instance_arn" --cluster "$cluster_name" --query "containerInstances[0].ec2InstanceId" --output text)
+ec2_instance_type=$(aws ec2 describe-instances --region "$REGION" --instance-ids "$ec2_instance_id" --query "Reservations[0].Instances[0].InstanceType" --output text)
 echo "EC2 instance ID: $ec2_instance_id"
+echo "EC2 instance type: $ec2_instance_type"
 
 # Get EC2 instance launch time.
 ec2_instance_launch_time=$(aws ec2 describe-instances --region "$REGION" --instance-ids "$ec2_instance_id" --query "Reservations[0].Instances[0].LaunchTime" --output text)
@@ -70,6 +74,7 @@ aws dynamodb put-item --table-name "$reports_table" \
         "status": {"S": "started"},
         "compute_environment": {"S": "'"$AWS_BATCH_CE_NAME"'"},
         "ec2_instance_id": {"S": "'"$ec2_instance_id"'"},
+        "ec2_instance_type": {"S": "'"$ec2_instance_type"'"},
         "ec2_instance_launch_time": {"S": "'"$ec2_instance_launch_time"'"},
         "job_attempts": {"N": "'"$AWS_BATCH_JOB_ATTEMPT"'"},
         "parameters": {"S": "'"$received_cmd_line"'"},
@@ -89,6 +94,7 @@ if [ "$command" == "guppy_basecaller" ]; then
   basecaller_name="guppy"
   basecaller_version=$(guppy_basecaller --version | grep -oP "(?<=Version )[0-9]+\.[0-9]+\.[0-9]+")
   echo "basecaller: $basecaller_name v$basecaller_version"
+  # Do not place $parameters in quotation marks! Will cause "Unexpected token '[...]' on command-line" error.
   guppy_basecaller $parameters |& tee guppy_basecaller.log
   ret="${PIPESTATUS[0]}"
 fi
@@ -117,6 +123,7 @@ if [ "$ret" != 0 ]; then
           "status": {"S": "'"$status"'"},
           "compute_environment": {"S": "'"$AWS_BATCH_CE_NAME"'"},
           "ec2_instance_id": {"S": "'"$ec2_instance_id"'"},
+          "ec2_instance_type": {"S": "'"$ec2_instance_type"'"},
           "ec2_instance_launch_time": {"S": "'"$ec2_instance_launch_time"'"},
           "job_attempts": {"N": "'"$AWS_BATCH_JOB_ATTEMPT"'"},
           "parameters": {"S": "'"$received_cmd_line"'"},
@@ -147,6 +154,7 @@ else
           "status": {"S": "'"$status"'"},
           "compute_environment": {"S": "'"$AWS_BATCH_CE_NAME"'"},
           "ec2_instance_id": {"S": "'"$ec2_instance_id"'"},
+          "ec2_instance_type": {"S": "'"$ec2_instance_type"'"},
           "ec2_instance_launch_time": {"S": "'"$ec2_instance_launch_time"'"},
           "job_attempts": {"N": "'"$AWS_BATCH_JOB_ATTEMPT"'"},
           "parameters": {"S": "'"$received_cmd_line"'"},
