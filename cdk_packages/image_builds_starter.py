@@ -33,17 +33,10 @@ class ImageBuildStarter(Construct):
 
         # ---------- Lambda function start image builds --------------------
 
-        # lambda_role = iam.Role(
-        #     self, 'Lambda role',
-        #     assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
-        #     description='Role for Lambda function to start image builds.'
-        # )
-
         # Lamda function to start image build.
         self.start_image_build = lambda_.Function(
             self, 'Start image builds in EC2 Image Builder',
             description='Start image builds in EC2 Image Builder',
-            # role=lambda_role,
             code=lambda_.Code.from_asset(os.path.join(dirname, 'assets', 'lambda_functions', 'start_image_build')),
             handler='start_image_build.lambda_handler',
             timeout=cdk.Duration.minutes(5),

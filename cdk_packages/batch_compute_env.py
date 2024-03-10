@@ -136,20 +136,6 @@ class BatchComputeEnv(Construct):
             parameter_name='/ONT-performance-benchmark/aws-batch-instance-types',
             string_value=file_asset.s3_object_url,
         ).grant_read(params.compute_env_update.update_compute_environments)
-        # # Publish the mapping of compute environment names to instance types in Parameter Store.
-        # with tempfile.NamedTemporaryFile(suffix='.json', mode='w') as temp:
-        #     json.dump(map_compute_environment_instance_type, temp)
-        #     temp.flush()  # force the data to be written to the temp file
-        #     file_asset = Asset(
-        #         self, 'map compute environment instance type',
-        #         path=temp.name
-        #     )
-        # file_asset.grant_read(params.compute_env_update.update_compute_environments)
-        # ssm.StringParameter(
-        #     self, 'SSM parameter AWS Batch compute environments',
-        #     parameter_name='/ONT-performance-benchmark/aws-batch-map-compute-environments-instance-types',
-        #     string_value=file_asset.s3_object_url,
-        # ).grant_read(params.compute_env_update.update_compute_environments)
         ssm.StringParameter(
             self, 'AWS Batch launch template',
             parameter_name='/ONT-performance-benchmark/aws-batch-launch-template',
@@ -286,9 +272,11 @@ def get_instance_types():
 
     # List of instance types for which we create spot compute environments in AWS Batch.
     spot_instance_types = [
-        'p5.48xlarge', 'p4d.24xlarge', 'p3dn.24xlarge',
-        'g5.xlarge', 'g5.2xlarge', 'g5.12xlarge', 'g5.48xlarge',
-        'g4dn.xlarge',
+        'p5.48xlarge',
+        'p4d.24xlarge',
+        'p3dn.24xlarge', 'p3.16xlarge', 'p3.8xlarge', 'p3.2xlarge',
+        'g5.xlarge', 'g5.2xlarge', 'g5.12xlarge', 'g5.24xlarge', 'g5.48xlarge',
+        'g4dn.metal', 'g4dn.12xlarge',
     ]
     instance_types = {}
     describe_args = {}

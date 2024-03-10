@@ -28,13 +28,6 @@ class BasecallerContainer(Construct):
         region = cdk.Stack.of(self).region
         account = cdk.Stack.of(self).account
 
-        repository = ecr.Repository(
-            self, 'ONT basecaller repository',
-            repository_name='basecaller',
-            removal_policy=cdk.RemovalPolicy.DESTROY,
-            auto_delete_images=True,
-        )
-
         aws_cli = imagebuilder.CfnComponent(
             self, 'AWS CLI for container',
             name='AWS CLI for container',
@@ -58,6 +51,13 @@ class BasecallerContainer(Construct):
             path=os.path.join(dirname, 'assets', 'basecaller.sh')
         )
         basecaller_script.grant_read(params.image_builder.ec2_instance_role)
+
+        repository = ecr.Repository(
+            self, 'ONT basecaller repository',
+            repository_name='basecaller',
+            removal_policy=cdk.RemovalPolicy.DESTROY,
+            auto_delete_images=True,
+        )
 
         self.recipe_container = imagebuilder.CfnContainerRecipe(
             self, 'ONT basecaller container',

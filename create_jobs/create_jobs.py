@@ -110,25 +110,38 @@ def main():
     aws_batch_env = BasecallerBatch()
 
     compute = [
-        {'instance_type': 'g5.48xlarge', 'provisioning_model': 'EC2'},
-        {'instance_type': 'p3.16xlarge', 'provisioning_model': 'EC2'},
+        {'instance_type': 'g5.48xlarge', 'provisioning_model': 'SPOT'},
+        {'instance_type': 'p3.16xlarge', 'provisioning_model': 'SPOT'},
     ]
 
-    # test p5.48xlarge spot
-    compute = [
-        # {'instance_type': 'p5.48xlarge', 'provisioning_model': 'SPOT'},
-        {'instance_type': 'g5.48xlarge', 'provisioning_model': 'SPOT'},
-    ]
+    # Uncomment to run performance benchmark against a larger set of instance types.
+    # CAUTION: Please be aware of the cost implication of running a large number
+    # of large EC2 instances (e.g. p5)!
+    # compute = [
+    #     {'instance_type': 'p5.48xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g5.48xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'p4d.24xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'p3dn.24xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'p3.16xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'p3.8xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'p3.2xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g5.xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g5.2xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g5.12xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g5.24xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g4dn.metal', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g4dn.12xlarge', 'provisioning_model': 'SPOT'},
+    # ]
 
     # create guppy jobs
-    # create_batch_jobs(compute, aws_batch_env, cmd=gupppy_no_modified_bases, tags='guppy, no modified bases')
-    # create_batch_jobs(compute, aws_batch_env, cmd=gupppy_modified_bases_5mCG, tags='guppy, modified bases 5mCG')
-    # create_batch_jobs(compute, aws_batch_env, cmd=gupppy_modified_bases_5mCG_5hmCG, tags='guppy, modified bases 5mCG & 5hmCG')
+    create_batch_jobs(compute, aws_batch_env, cmd=gupppy_no_modified_bases, tags='guppy, no modified bases')
+    create_batch_jobs(compute, aws_batch_env, cmd=gupppy_modified_bases_5mCG, tags='guppy, modified bases 5mCG')
+    create_batch_jobs(compute, aws_batch_env, cmd=gupppy_modified_bases_5mCG_5hmCG, tags='guppy, modified bases 5mCG & 5hmCG')
 
     # create dorado jobs
     create_batch_jobs(compute, aws_batch_env, cmd=dorado_no_modified_bases, tags='dorado, no modified bases')
-    # create_batch_jobs(compute, aws_batch_env, cmd=dorado_modified_bases_5mCG, tags='dorado, modified bases 5mCG')
-    # create_batch_jobs(compute, aws_batch_env, cmd=dorado_modified_bases_5mCG_5hmCG, tags='dorado, modified bases 5mCG & 5hmCG')
+    create_batch_jobs(compute, aws_batch_env, cmd=dorado_modified_bases_5mCG, tags='dorado, modified bases 5mCG')
+    create_batch_jobs(compute, aws_batch_env, cmd=dorado_modified_bases_5mCG_5hmCG, tags='dorado, modified bases 5mCG & 5hmCG')
 
 
 if __name__ == '__main__':

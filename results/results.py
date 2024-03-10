@@ -27,7 +27,7 @@ def main():
     results = filter_results(results)
     print('Processing results ...')
     results = utils.transform_samples_per_s(results)
-    results = utils.transform_compute_environment(results)
+    # results = utils.transform_compute_environment(results)
     results = utils.add_basecaller_label(results)
     results = utils.add_data_set_id(results)
     results = utils.add_gpu_count(results, instance_specs)
@@ -206,7 +206,7 @@ def generate_chart_runtime_whg_30x(results: pd.DataFrame):
 
 def generate_cost_tables(results: pd.DataFrame):
     # transform data into structure suitable for multi-header Excel file
-    columns = ['compute_environment', 'basecaller', 'modified_bases', 'runtime_type',
+    columns = ['ec2_instance_type', 'basecaller', 'modified_bases', 'runtime_type',
                'runtime_h', 'cost_region', 'cost_per_gigabase', 'cost_per_whg_30x']
     temp1 = results[columns].copy()
     temp1.rename(columns={'modified_bases': 'header_lvl_1'}, inplace=True)
@@ -229,7 +229,7 @@ def generate_cost_tables(results: pd.DataFrame):
     df_pivot = pd.pivot_table(
         df,
         values='value',
-        index=['compute_environment', 'basecaller', 'cost_region'],
+        index=['ec2_instance_type', 'basecaller', 'cost_region'],
         columns=['header_lvl_1', 'header_lvl_2', 'header_lvl_3']
     )
     df_pivot = df_pivot.reindex(['runtime [h]', 'cost [$]'], axis=1, level=1)
@@ -238,23 +238,23 @@ def generate_cost_tables(results: pd.DataFrame):
 
     # add additional columns for Excel file
     df_pivot.loc[:, 'num_gpus'] = df_pivot.apply(
-        lambda row: instance_specs[row.compute_environment.iloc[0]]['GpuInfo']['Gpus'][0]['Count'],
+        lambda row: instance_specs[row.ec2_instance_type.iloc[0]]['GpuInfo']['Gpus'][0]['Count'],
         axis=1
     )
     df_pivot.loc[:, 'cost_per_hour'] = df_pivot.apply(
-        lambda row: instance_cost['instances'][row.cost_region.iloc[0]][row.compute_environment.iloc[0]]['cost_per_hour']
-        if instance_cost['instances'][row.cost_region.iloc[0]][row.compute_environment.iloc[0]]['cost_per_hour'] else None,
+        lambda row: instance_cost['instances'][row.cost_region.iloc[0]][row.ec2_instance_type.iloc[0]]['cost_per_hour']
+        if instance_cost['instances'][row.cost_region.iloc[0]][row.ec2_instance_type.iloc[0]]['cost_per_hour'] else None,
         axis=1
     )
 
     # reorder and rename columns for readability
     df_pivot = df_pivot.round(decimals=2)
     df_pivot = df_pivot[[
-        'cost_region', 'compute_environment', 'num_gpus', 'cost_per_hour', 'basecaller',
+        'cost_region', 'ec2_instance_type', 'num_gpus', 'cost_per_hour', 'basecaller',
         'no modified bases']]
     df_pivot.rename(
         columns={
-            'compute_environment': 'instance type',
+            'ec2_instance_type': 'instance type',
             'num_gpus': 'GPUs',
             'cost_per_hour': 'cost/hour [$]',
             'no modified bases': 'without modification calling',

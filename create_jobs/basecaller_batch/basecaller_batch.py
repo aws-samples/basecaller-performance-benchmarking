@@ -25,7 +25,6 @@ account_id = boto3.client('sts').get_caller_identity().get('Account')
 # compute environments. This file is generated dynamically during deployment
 # of the performance benchmark environment.
 SSM_PARAMETER_STORE_INSTANCE_TYPES = '/ONT-performance-benchmark/aws-batch-instance-types'
-# SSM_PARAMETER_STORE_COMPUTE_ENVIRONMENTS = '/ONT-performance-benchmark/aws-batch-map-compute-environments-instance-types'
 BASECALLER_DOCKER_IMAGE = f'{account_id}.dkr.ecr.{aws_region_name}.amazonaws.com/basecaller:latest'
 
 
@@ -34,6 +33,8 @@ class BasecallerBatch:
     def __init__(self):
         self.instance_types = None
         self.validated_instances = [
+            # The instance types listed here have been used in the performance benchmark described here:
+            # https://aws.amazon.com/blogs/hpc/benchmarking-the-oxford-nanopore-technologies-basecallers-on-aws/
             'g4dn.metal', 'g4dn.xlarge', 'g4dn.2xlarge', 'g4dn.4xlarge', 'g4dn.8xlarge', 'g4dn.12xlarge',
             'g4dn.16xlarge',
             'g5.xlarge', 'g5.2xlarge', 'g5.4xlarge', 'g5.8xlarge', 'g5.12xlarge', 'g5.16xlarge', 'g5.24xlarge',
