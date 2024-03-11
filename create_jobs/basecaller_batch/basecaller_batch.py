@@ -29,6 +29,11 @@ BASECALLER_DORADO_0_3_0 = f'{account_id}.dkr.ecr.{aws_region_name}.amazonaws.com
 BASECALLER_DORADO_0_5_3 = f'{account_id}.dkr.ecr.{aws_region_name}.amazonaws.com/basecaller_guppy_latest_dorado0.5.3:latest'
 BASECALLER_DOCKER_IMAGE = BASECALLER_DORADO_0_5_3
 
+CONTAINER_SHORT_NAME = {
+    BASECALLER_DORADO_0_3_0: 'guppy-dorado0-3-0',
+    BASECALLER_DORADO_0_5_3: 'guppy-dorado0-5-3',
+}
+
 CONTAINER_PROPERTIES_TEMPLATE = {
     'image': '',
     'resourceRequirements': [
@@ -73,97 +78,154 @@ class BasecallerBatch:
             'p3.2xlarge', 'p3.8xlarge', 'p3.16xlarge', 'p3dn.24xlarge',
             'p4d.24xlarge',
         ]
+        self.test_data = TestData()
+        self.test_data.load_pod5_subsets()
         self.instance_types = get_aws_batch_instance_types()
-        self.job_definitions = get_job_definitions()
-        self.create_missing_job_definitions()
+        # self.job_definitions = get_job_definitions()
+        # self.create_missing_job_definitions()
 
-    def create_missing_job_definitions(self):
-        """
-        Ensure that for each AWS Batch compute environment there is a job definition.
-        """
-        missing_job_definitions = self.get_missing_job_definition_names()
-        self.create_job_definitions(missing_job_definitions, self.instance_types)
+    # def create_missing_job_definitions(self):
+    #     """
+    #     Ensure that for each AWS Batch compute environment there is a job definition.
+    #     """
+    #     missing_job_definitions = self.get_missing_job_definition_names()
+    #     self.create_job_definitions(missing_job_definitions, self.instance_types)
 
-    def get_missing_job_definition_names(self):
-        """
-        Get all existing AWS Batch job definitions that match to compute environments.
-        """
-        expected_job_definitions = {}
-        for instance_type in self.instance_types.keys():
-            if 'EC2' in self.instance_types[instance_type]['ProvisioningModel']:
-                expected_job_definitions[(instance_type.replace('.', '-'))] = instance_type
-            if 'SPOT' in self.instance_types[instance_type]['ProvisioningModel']:
-                expected_job_definitions[instance_type.replace('.', '-') + '-spot'] = instance_type
-        missing_job_definitions = [
-            {
-                'job_definition_name': job_definition_name,
-                'instance_type': expected_job_definitions[job_definition_name]
-            }
-            for job_definition_name in expected_job_definitions.keys()
-            if job_definition_name not in self.job_definitions.keys()
-        ]
-        return missing_job_definitions
+    # def get_missing_job_definition_names(self):
+    #     """
+    #     Get all existing AWS Batch job definitions that match to compute environments.
+    #     """
+    #     expected_job_definitions = {}
+    #     for instance_type in self.instance_types.keys():
+    #         if 'EC2' in self.instance_types[instance_type]['ProvisioningModel']:
+    #             expected_job_definitions[(instance_type.replace('.', '-'))] = instance_type
+    #         if 'SPOT' in self.instance_types[instance_type]['ProvisioningModel']:
+    #             expected_job_definitions[instance_type.replace('.', '-') + '-spot'] = instance_type
+    #     missing_job_definitions = [
+    #         {
+    #             'job_definition_name': job_definition_name,
+    #             'instance_type': expected_job_definitions[job_definition_name]
+    #         }
+    #         for job_definition_name in expected_job_definitions.keys()
+    #         if job_definition_name not in self.job_definitions.keys()
+    #     ]
+    #     return missing_job_definitions
 
-    def create_job_definitions(self, job_definitions, instance_types):
-        # instance_types = self.instance_types if instance_types is None else instance_types
-        for job_definition in job_definitions:
-            vcpus = instance_types[job_definition['instance_type']]['VCpuInfo']['DefaultVCpus']
-            gpus = sum([gpu['Count'] for gpu in instance_types[job_definition['instance_type']]['GpuInfo']['Gpus']])
-            memory = int(
-                instance_types[job_definition['instance_type']]['MemoryInfo'][
-                    'SizeInMiB'] * 0.9)  # reserve max. 90% of memory for tasks
-            container_properties = CONTAINER_PROPERTIES_TEMPLATE
-            container_properties['image'] = BASECALLER_DOCKER_IMAGE
-            container_properties['resourceRequirements'][0]['value'] = str(vcpus)
-            container_properties['resourceRequirements'][1]['value'] = str(gpus)
-            container_properties['resourceRequirements'][2]['value'] = str(memory)
-            batch_job_definition = batch_client.register_job_definition(
-                jobDefinitionName=job_definition['job_definition_name'],
-                type='container',
-                parameters={
-                    'tags': ''
-                },
-                containerProperties=container_properties
+    # def create_job_definitions(self, job_definitions, instance_types):
+    #     # instance_types = self.instance_types if instance_types is None else instance_types
+    #     for job_definition in job_definitions:
+    #         vcpus = instance_types[job_definition['instance_type']]['VCpuInfo']['DefaultVCpus']
+    #         gpus = sum([gpu['Count'] for gpu in instance_types[job_definition['instance_type']]['GpuInfo']['Gpus']])
+    #         memory = int(
+    #             instance_types[job_definition['instance_type']]['MemoryInfo'][
+    #                 'SizeInMiB'] * 0.9)  # reserve max. 90% of memory for tasks
+    #         container_properties = CONTAINER_PROPERTIES_TEMPLATE
+    #         container_properties['image'] = BASECALLER_DOCKER_IMAGE
+    #         container_properties['resourceRequirements'][0]['value'] = str(vcpus)
+    #         container_properties['resourceRequirements'][1]['value'] = str(gpus)
+    #         container_properties['resourceRequirements'][2]['value'] = str(memory)
+    #         batch_job_definition = batch_client.register_job_definition(
+    #             jobDefinitionName=job_definition['job_definition_name'],
+    #             type='container',
+    #             parameters={
+    #                 'tags': ''
+    #             },
+    #             containerProperties=container_properties,
+    #         )
+    #         self.job_definitions[job_definition['job_definition_name']] = batch_job_definition
+
+    def create_batch_jobs(self, compute: list, container: str = BASECALLER_DOCKER_IMAGE, cmd: str = '', tags: str = ''):
+        params_templ = Template(cmd)
+        for item in compute:  # aws_batch_env.validated_instances:
+            max_vcpus = self.instance_types[item['instance_type']]['VCpuInfo']['DefaultVCpus']
+            max_gpus = sum([
+                gpu['Count']
+                for gpu in self.instance_types[item['instance_type']]['GpuInfo']['Gpus']
+            ])
+            max_memory = int(
+                self.instance_types[item['instance_type']]['MemoryInfo']['SizeInMiB'] * 0.9
             )
-            self.job_definitions[job_definition['job_definition_name']] = batch_job_definition
+            file_lists = self.test_data.pod5_sample_data_subsets['wgs_subset_128_files'][max_gpus]  # 1 job per GPU
+            # Unique identifier that allows to track which AWS batch jobs belong to the same data set
+            data_set_id = str(uuid.uuid4())
+            print('Generating AWS Batch jobs ...')
+            for file_list in file_lists:
+                params = params_templ.substitute(
+                    file_list=file_list,
+                    num_base_mod_threads=max_vcpus // max_gpus if (max_vcpus // max_gpus) <= 48 else 48
+                )
+                job_id = self.submit_basecaller_job(
+                    instance_type=item['instance_type'],
+                    provisioning_model=item['provisioning_model'],
+                    container=container,
+                    basecaller_params=params,
+                    gpus=1,
+                    vcpus=max_vcpus // max_gpus,
+                    memory=max_memory // max_gpus,
+                    tags=[tags],
+                    data_set_id=data_set_id,
+                )
+                print(f'instance type: {item["instance_type"]}, tags: {tags}, file list: {file_list}, job ID: {job_id}')
+            print('Done. Check the status of the jobs in the AWS Batch console.')
 
-    def deregister_all_job_definitions(self):
-        """
-        Deregister all job definitions. Call this function if there are issues with the job definitions.
-        Job definitions are re-created when an object is instanced from class BasecallerBatch.
-        """
-        for job_definition in self.job_definitions:
-            print(f'Deleting job definition "{job_definition}" ...')
-            job_definition_details = batch_client.describe_job_definitions(
-                jobDefinitionName=job_definition,
-                status='ACTIVE'
-            )
-            for item in job_definition_details['jobDefinitions']:
-                batch_client.deregister_job_definition(jobDefinition=item['jobDefinitionArn'])
-
-    def submit_basecaller_job(self, instance_type='', provisioning_model='EC2', basecaller_params='', **kwargs):
+    def submit_basecaller_job(
+            self,
+            instance_type='', provisioning_model='EC2', container=BASECALLER_DOCKER_IMAGE,
+            basecaller_params='', **kwargs):
         job_queue = self.instance_types[instance_type]['ProvisioningModel'][provisioning_model]
+        job_definition_arn = self.get_job_definition_arn(instance_type, provisioning_model, container)
         container_overrides = self.make_container_overrides(basecaller_params, **kwargs)
         job = batch_client.submit_job(
             jobName=job_queue,
             jobQueue=job_queue,
-            jobDefinition=self.job_definitions[job_queue]['jobDefinitionArn'],
+            jobDefinition=job_definition_arn,
             containerOverrides=container_overrides,
             retryStrategy={'attempts': 10}
         )
         return job['jobId']
 
-    def terminate_all_jobs(self):
-        for instance_type in self.instance_types:
-            job_queue = f'{instance_type.replace(".", "-")}'
-            for job_status in ['SUBMITTED', 'PENDING', 'RUNNABLE', 'STARTING', 'RUNNING']:
-                jobs = batch_client.list_jobs(
-                    jobQueue=job_queue,
-                    jobStatus=job_status,
-                )
-                for job in jobs['jobSummaryList']:
-                    print(f'terminating job: {job["jobId"]}')
-                    batch_client.terminate_job(jobId=job['jobId'], reason='Cancelled by basecaller perf-bench')
+    def get_job_definition_arn(self, instance_type, provisioning_model, container):
+        """
+        Get job definition ARN for given job queue, instance type and container. If job definition doesn't
+        exist, create one.
+
+        :return: job definition ARN
+        """
+        job_definition_name = f'{instance_type.replace(".", "-")}-{provisioning_model}-{CONTAINER_SHORT_NAME[container]}'
+        job_definition = get_job_definition(job_definition_name)
+        if job_definition:
+            job_definition_arn = job_definition['jobDefinitionArn']
+        else:
+            job_definition = self.create_job_definition(
+                job_definition_name, instance_type=instance_type, container=container
+            )
+            job_definition_arn = job_definition['jobDefinitionArn']
+        return job_definition_arn
+
+    def create_job_definition(self, job_definition_name, instance_type='', container=BASECALLER_DOCKER_IMAGE):
+        """
+        Create job definition for given job definition name.
+
+        :return: job definition details
+        """
+        vcpus = self.instance_types[instance_type]['VCpuInfo']['DefaultVCpus']
+        gpus = sum([gpu['Count'] for gpu in self.instance_types[instance_type]['GpuInfo']['Gpus']])
+        memory = int(
+            self.instance_types[instance_type]['MemoryInfo'][
+                'SizeInMiB'] * 0.9)  # reserve max. 90% of memory for tasks
+        container_properties = CONTAINER_PROPERTIES_TEMPLATE
+        container_properties['image'] = container
+        container_properties['resourceRequirements'][0]['value'] = str(vcpus)
+        container_properties['resourceRequirements'][1]['value'] = str(gpus)
+        container_properties['resourceRequirements'][2]['value'] = str(memory)
+        job_definition = batch_client.register_job_definition(
+            jobDefinitionName=job_definition_name,
+            type='container',
+            # parameters={'tags': ''},
+            containerProperties=container_properties,
+            tags={'application': 'ONT Performance Benchmark'},
+        )
+        return job_definition
 
     def make_container_overrides(self, basecaller_params='', **kwargs):
         env_vars = [
@@ -192,6 +254,19 @@ class BasecallerBatch:
         return container_overrides
 
 
+def environment_is_ready():
+    print('Checking benchmark environment readiness ...')
+    download_status = ssm_client.get_parameter(
+        Name='/ONT-performance-benchmark/download-status'
+    )['Parameter']['Value']
+    pod5_converter_status = ssm_client.get_parameter(
+        Name='/ONT-performance-benchmark/pod5-converter-status'
+    )['Parameter']['Value']
+    print(f'Status downloading data set = {download_status}')
+    print(f'Status converting data from FAST5 to POD5 format = {pod5_converter_status}')
+    return download_status == 'completed' and pod5_converter_status == 'completed'
+
+
 def get_aws_batch_instance_types():
     """
     Read list of AWS Batch compute environments. The list is stored as JSON file
@@ -206,45 +281,49 @@ def get_aws_batch_instance_types():
     return instance_types
 
 
-def get_job_definitions():
+# def get_job_definitions():
+#     job_definitions = {
+#         job_definition['jobDefinitionName']: job_definition
+#         for job_definition in batch_client.describe_job_definitions(status='ACTIVE')['jobDefinitions']
+#     }
+#     return job_definitions
+
+
+def get_job_definition(job_definition_name):
+    """
+    Get job definition details for given job definition name.
+
+    :return: job definition details
+    """
     job_definitions = {
         job_definition['jobDefinitionName']: job_definition
         for job_definition in batch_client.describe_job_definitions(status='ACTIVE')['jobDefinitions']
     }
-    return job_definitions
+    if job_definition_name in job_definitions.keys():
+        return job_definitions[job_definition_name]
+    return None
 
 
-def create_batch_jobs(compute: list, aws_batch_env: BasecallerBatch, cmd: str = '', tags: str = ''):
-    test_data = TestData()
-    test_data.load_pod5_subsets()
-    params_templ = Template(cmd)
-    for item in compute:  # aws_batch_env.validated_instances:
-        max_vcpus = aws_batch_env.instance_types[item['instance_type']]['VCpuInfo']['DefaultVCpus']
-        max_gpus = sum([
-            gpu['Count']
-            for gpu in aws_batch_env.instance_types[item['instance_type']]['GpuInfo']['Gpus']
-        ])
-        max_memory = int(
-            aws_batch_env.instance_types[item['instance_type']]['MemoryInfo']['SizeInMiB'] * 0.9
-        )
-        file_lists = test_data.pod5_sample_data_subsets['wgs_subset_128_files'][max_gpus]  # 1 job per GPU
-        # Unique identifier that allows to track which AWS batch jobs belong to the same data set
-        data_set_id = str(uuid.uuid4())
-        print('Generating AWS Batch jobs ...')
-        for file_list in file_lists:
-            params = params_templ.substitute(
-                file_list=file_list,
-                num_base_mod_threads=max_vcpus // max_gpus if (max_vcpus // max_gpus) <= 48 else 48
+def terminate_all_jobs():
+    job_queues = batch_client.describe_job_queues()
+    for job_queue in job_queues['jobQueues']:
+        for job_status in ['SUBMITTED', 'PENDING', 'RUNNABLE', 'STARTING', 'RUNNING']:
+            jobs = batch_client.list_jobs(
+                jobQueue=job_queue['jobQueueName'],
+                jobStatus=job_status,
             )
-            job_id = aws_batch_env.submit_basecaller_job(
-                instance_type=item['instance_type'],
-                provisioning_model=item['provisioning_model'],
-                basecaller_params=params,
-                gpus=1,
-                vcpus=max_vcpus // max_gpus,
-                memory=max_memory // max_gpus,
-                tags=[tags],
-                data_set_id=data_set_id,
-            )
-            print(f'instance type: {item["instance_type"]}, tags: {tags}, file list: {file_list}, job ID: {job_id}')
-        print('Done. Check the status of the jobs in the AWS Batch console.')
+            for job in jobs['jobSummaryList']:
+                print(f'terminating job: {job["jobId"]} in queue: {job_queue["jobQueueName"]}')
+                batch_client.terminate_job(jobId=job['jobId'], reason='Cancelled by basecaller perf-bench')
+
+
+def deregister_all_job_definitions():
+    """
+    Deregister all job definitions. Call this function if there are issues with the job definitions.
+    """
+    job_definition_details = batch_client.describe_job_definitions(
+        status='ACTIVE'
+    )
+    for item in job_definition_details['jobDefinitions']:
+        print(f'Deleting job definition "{item["jobDefinitionName"]}" ...')
+        batch_client.deregister_job_definition(jobDefinition=item['jobDefinitionArn'])

@@ -59,7 +59,7 @@ def filter_results(df: pd.DataFrame):
     """
     results = pd.DataFrame()
 
-    # guppy
+    # ---------- guppy ----------
 
     temp = get_latest_run(df[(df['tags'] == 'guppy, no modified bases') & (df['status'] == 'succeeded')].copy())
     if not temp.empty:
@@ -76,7 +76,7 @@ def filter_results(df: pd.DataFrame):
         temp.loc[:, 'modified_bases'] = '5mCG_5hmCG'
     results = pd.concat([results, temp], ignore_index=True)
 
-    # dorado
+    # ---------- dorado ----------
 
     temp = get_latest_run(df[(df['tags'] == 'dorado, no modified bases') & (df['status'] == 'succeeded')].copy())
     if not temp.empty:
