@@ -108,10 +108,11 @@ def main():
     ]
 
     compute = [
-        {'instance_type': 'p5.48xlarge', 'provisioning_model': 'SPOT'},
-        {'instance_type': 'p4d.24xlarge', 'provisioning_model': 'EC2'},
-        {'instance_type': 'g5.48xlarge', 'provisioning_model': 'SPOT'},
-        {'instance_type': 'p3.16xlarge', 'provisioning_model': 'SPOT'},
+        {'instance_type': 'p5.48xlarge', 'provisioning_model': 'SPOT'},  # H100
+        {'instance_type': 'p4d.24xlarge', 'provisioning_model': 'EC2'},  # A100
+        {'instance_type': 'p3dn.24xlarge', 'provisioning_model': 'SPOT'},  # V100
+        {'instance_type': 'p3.16xlarge', 'provisioning_model': 'SPOT'},  # V100
+        {'instance_type': 'g5.48xlarge', 'provisioning_model': 'SPOT'},   # A10G
     ]
 
     # Uncomment to run performance benchmark against a larger set of instance types.
@@ -141,6 +142,11 @@ def main():
     # create dorado jobs
     aws_batch_env.create_batch_jobs(compute, container=BASECALLER_DORADO_0_3_0, cmd=dorado_no_modified_bases, tags='dorado v0.3.0, no modified bases')
     aws_batch_env.create_batch_jobs(compute, container=BASECALLER_DORADO_0_5_3, cmd=dorado_no_modified_bases, tags='dorado v0.5.3, no modified bases')
+    aws_batch_env.create_batch_jobs(compute, container=BASECALLER_DORADO_0_3_0, cmd=dorado_modified_bases_5mCG, tags='dorado v0.3.0, modified bases 5mCG')
+    aws_batch_env.create_batch_jobs(compute, container=BASECALLER_DORADO_0_5_3, cmd=dorado_modified_bases_5mCG, tags='dorado v0.5.3, modified bases 5mCG')
+    aws_batch_env.create_batch_jobs(compute, container=BASECALLER_DORADO_0_3_0, cmd=dorado_modified_bases_5mCG_5hmCG, tags='dorado v0.3.0, modified bases 5mCG & 5hmCG')
+    aws_batch_env.create_batch_jobs(compute, container=BASECALLER_DORADO_0_5_3, cmd=dorado_modified_bases_5mCG_5hmCG, tags='dorado v0.5.3, modified bases 5mCG & 5hmCG')
+
     # aws_batch_env.create_batch_jobs(compute, cmd=dorado_no_modified_bases, tags='dorado, no modified bases')
     # aws_batch_env.create_batch_jobs(compute, cmd=dorado_modified_bases_5mCG, tags='dorado, modified bases 5mCG')
     # aws_batch_env.create_batch_jobs(compute, cmd=dorado_modified_bases_5mCG_5hmCG, tags='dorado, modified bases 5mCG & 5hmCG')
