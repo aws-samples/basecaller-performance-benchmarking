@@ -145,7 +145,9 @@ class BaseAMI(Construct):
 
         # ---------- pipeline --------------------
 
-        self.ami_pipeline = imagebuilder.CfnImagePipeline(
+        self.pipeline_arns = []
+
+        ami_pipeline = imagebuilder.CfnImagePipeline(
             self, 'ONT base AMI pipeline',
             name='ONT base AMI pipeline',
             description='ONT base AMI pipeline',
@@ -154,6 +156,8 @@ class BaseAMI(Construct):
             image_recipe_arn=self.recipe_ont_base_image.attr_arn,
             status='ENABLED',
         )
+
+        self.pipeline_arns.append(ami_pipeline.attr_arn)
 
         # ----------------------------------------------------------------
         #       cdk_nag suppressions

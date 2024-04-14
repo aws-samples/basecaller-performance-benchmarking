@@ -25,9 +25,12 @@ def main():
         return
     print('Filtering results ...')
     results = filter_results(results)
+    if results.empty:
+        print('No results after filtering. Make sure to filter for the tags provided '
+              'during creating the jobs. Exiting ...')
+        return
     print('Processing results ...')
     results = utils.transform_samples_per_s(results)
-    # results = utils.transform_compute_environment(results)
     results = utils.add_basecaller_label(results)
     results = utils.add_data_set_id(results)
     results = utils.add_gpu_count(results, instance_specs)
@@ -60,7 +63,7 @@ def filter_results(df: pd.DataFrame):
     """
     results = pd.DataFrame()
 
-    # guppy
+    # ---------- guppy ----------
 
     temp = get_latest_run(df[(df['tags'] == 'guppy, no modified bases') & (df['status'] == 'succeeded')].copy())
     if not temp.empty:
@@ -77,7 +80,7 @@ def filter_results(df: pd.DataFrame):
         temp.loc[:, 'modified_bases'] = '5mCG_5hmCG'
     results = pd.concat([results, temp], ignore_index=True)
 
-    # dorado
+    # ---------- dorado ----------
 
     temp = get_latest_run(df[(df['tags'] == 'dorado, no modified bases') & (df['status'] == 'succeeded')].copy())
     if not temp.empty:
@@ -90,6 +93,36 @@ def filter_results(df: pd.DataFrame):
     results = pd.concat([results, temp], ignore_index=True)
 
     temp = get_latest_run(df[(df['tags'] == 'dorado, modified bases 5mCG & 5hmCG') & (df['status'] == 'succeeded')].copy())
+    if not temp.empty:
+        temp.loc[:, 'modified_bases'] = '5mCG_5hmCG'
+    results = pd.concat([results, temp], ignore_index=True)
+
+    temp = get_latest_run(df[(df['tags'] == 'dorado v0.3.0, no modified bases') & (df['status'] == 'succeeded')].copy())
+    if not temp.empty:
+        temp.loc[:, 'modified_bases'] = 'no modified bases'
+    results = pd.concat([results, temp], ignore_index=True)
+
+    temp = get_latest_run(df[(df['tags'] == 'dorado v0.3.0, modified bases 5mCG') & (df['status'] == 'succeeded')].copy())
+    if not temp.empty:
+        temp.loc[:, 'modified_bases'] = '5mCG'
+    results = pd.concat([results, temp], ignore_index=True)
+
+    temp = get_latest_run(df[(df['tags'] == 'dorado v0.3.0, modified bases 5mCG & 5hmCG') & (df['status'] == 'succeeded')].copy())
+    if not temp.empty:
+        temp.loc[:, 'modified_bases'] = '5mCG_5hmCG'
+    results = pd.concat([results, temp], ignore_index=True)
+
+    temp = get_latest_run(df[(df['tags'] == 'dorado v0.5.3, no modified bases') & (df['status'] == 'succeeded')].copy())
+    if not temp.empty:
+        temp.loc[:, 'modified_bases'] = 'no modified bases'
+    results = pd.concat([results, temp], ignore_index=True)
+
+    temp = get_latest_run(df[(df['tags'] == 'dorado v0.5.3, modified bases 5mCG') & (df['status'] == 'succeeded')].copy())
+    if not temp.empty:
+        temp.loc[:, 'modified_bases'] = '5mCG'
+    results = pd.concat([results, temp], ignore_index=True)
+
+    temp = get_latest_run(df[(df['tags'] == 'dorado v0.5.3, modified bases 5mCG & 5hmCG') & (df['status'] == 'succeeded')].copy())
     if not temp.empty:
         temp.loc[:, 'modified_bases'] = '5mCG_5hmCG'
     results = pd.concat([results, temp], ignore_index=True)

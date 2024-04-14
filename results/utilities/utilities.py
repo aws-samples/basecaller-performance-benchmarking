@@ -214,7 +214,7 @@ def check_consistency(df: pd.DataFrame, instance_specs: dict):
 
 def aggregate_samples_per_s_runtime(df: pd.DataFrame):
     df = df[df['status'] == 'succeeded'] \
-        .groupby(['modified_bases', 'compute_environment', 'ec2_instance_type', 'num_gpus', 'data_set_id', 'basecaller']) \
+        .groupby(['modified_bases', 'compute_environment', 'ec2_instance_id', 'ec2_instance_type', 'num_gpus', 'data_set_id', 'basecaller']) \
         .agg({'samples_per_s': 'sum', 'container_run_time_h': 'mean'}) \
         .reset_index()
     return df

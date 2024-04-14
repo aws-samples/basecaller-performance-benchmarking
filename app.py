@@ -60,7 +60,7 @@ app = cdk.App()
 # cdk-nag: Check for compliance with CDK best practices
 #   https://github.com/cdklabs/cdk-nag
 # Uncomment the following line to run the cdk-nag checks
-# Aspects.of(app).add(cdk_nag.AwsSolutionsChecks(verbose=True))
+Aspects.of(app).add(cdk_nag.AwsSolutionsChecks(verbose=True))
 
 params.perfbench = PerfBench(
     app, 'ONT-PerfBench',
