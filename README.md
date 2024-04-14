@@ -102,8 +102,7 @@ This container is required for the build of the guppy and dorado container.
 Run the commands below to copy the container. Make sure you run the commands with AWS credentials for the us-west-2 
 region.
 ```shell
-#cuda_container="nvidia/cuda:12.3.2-runtime-ubuntu20.04"
-cuda_container="nvidia/cuda:12.3.0-runtime-ubuntu20.04"
+cuda_container="nvidia/cuda:12.3.2-runtime-ubuntu20.04"
 aws ecr create-repository --repository-name 'nvidia/cuda' --region us-west-2
 docker login
 docker pull "$cuda_container"
