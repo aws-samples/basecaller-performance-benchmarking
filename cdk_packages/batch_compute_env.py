@@ -270,6 +270,20 @@ def get_instance_types():
     Get instance types with filter.
     """
 
+    # If set to 'True', only validated instance types will be returned. This limits the number of
+    # AWS Batch compute environments. AWS Batch has a limit of 50 compute environments per account.
+    use_only_validated = True
+
+    # The instance types listed here have been tested in the performance benchmark
+    validated_instances = [
+        'g4dn.metal', 'g4dn.xlarge', 'g4dn.2xlarge', 'g4dn.4xlarge', 'g4dn.8xlarge', 'g4dn.12xlarge',
+        'g4dn.16xlarge',
+        'g5.xlarge', 'g5.2xlarge', 'g5.4xlarge', 'g5.8xlarge', 'g5.12xlarge', 'g5.16xlarge', 'g5.24xlarge',
+        'g5.48xlarge',
+        'p3.2xlarge', 'p3.8xlarge', 'p3.16xlarge', 'p3dn.24xlarge',
+        'p4d.24xlarge', 'p5.48xlarge',
+    ]
+
     # List of instance types for which we create spot compute environments in AWS Batch.
     spot_instance_types = [
         'p5.48xlarge',
@@ -278,11 +292,14 @@ def get_instance_types():
         'g5.xlarge', 'g5.2xlarge', 'g5.12xlarge', 'g5.24xlarge', 'g5.48xlarge',
         'g4dn.metal', 'g4dn.12xlarge',
     ]
+
     instance_types = {}
     describe_args = {}
     while True:
         results = ec2_client.describe_instance_types(**describe_args)
         for result in filter_results(results):
+            if use_only_validated and result['InstanceType'] not in validated_instances:
+                continue
             instance_types[result['InstanceType']] = {
                 'ProcessorInfo': result['ProcessorInfo'],
                 'VCpuInfo': result['VCpuInfo'],

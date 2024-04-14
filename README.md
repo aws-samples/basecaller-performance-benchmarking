@@ -81,8 +81,22 @@ This project deploys the following architecture (for a discussion please see the
 ## Preparing the AWS account for deployment
 
 All commands shown below are executed in a [Cloud9 environment](https://us-west-2.console.aws.amazon.com/cloud9control/home?region=us-west-2#/) 
-with Ubuntu. When working with the Cloud9 environment, it is required to expand the disk to 70 GB. Please follow the 
-instructions outlined in the Cloud9 user guide: [Resize an Amazon EBS volume that an environment uses](https://docs.aws.amazon.com/cloud9/latest/user-guide/move-environment.html#move-environment-resize) 
+with Ubuntu. Choose an m5.large instance type. It is required to expand the disk to 70 GB. The 
+code repository contains the script `resize.sh` to automate the disk resizing.
+
+After your Cloud) environment has started, clone the code repository and resize the disk to 70 GB:
+```shell
+git clone https://github.com/aws-samples/basecaller-performance-benchmarking.git
+cd basecaller-performance-benchmarking/
+ . ./resize.sh 70
+```
+
+Check the disk size:
+```shell
+df -h
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root        68G  6.4G   62G  10% /
+```
 
 This project performs a fully automated deployment of the performance benchmarking environment. The project utilizes 
 the AWS Cloud Development Toolkit version 2 (CDK v2) for Python.
@@ -126,6 +140,7 @@ pip install -r requirements.txt
 
 Bootstrap the CDK environment. If you work with CDK regularly, you may have done this earlier.  
 ```shell
+npm install -g aws-cdk
 cdk bootstrap
 ```
 
