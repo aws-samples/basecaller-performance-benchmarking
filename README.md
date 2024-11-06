@@ -67,18 +67,26 @@ This project deploys the following architecture (for a discussion please see the
 
 # Table of contents
 
-1. [Preparing the AWS account for deployment](#preparing-the-aws-account-for-deployment)
-2. [Deploying the project](#deploying-the-project)
-3. [Validating deployment completion](#validating-deployment-completion)
-4. [Running the performance benchmark tests](#running-the-performance-benchmark-tests)
-5. [Monitoring the execution of the running benchmark tests](#monitoring-the-execution-of-the-running-benchmark-tests)
-6. [Generating the results report](#generating-the-results-report)
-7. [Cleaning up](#cleaning-up)
-8. [Security](#security)
-9. [License](#license)
+- [Performance Test Oxford Nanopore Technologies Basecaller](#performance-test-oxford-nanopore-technologies-basecaller)
+- [Disclaimers](#disclaimers)
+    - [Third Party Packages](#third-party-packages)
+    - [General](#general)
+- [Introduction](#introduction)
+- [Table of contents](#table-of-contents)
+  - [Preparing the AWS account for deployment](#preparing-the-aws-account-for-deployment)
+  - [Deploying the project](#deploying-the-project)
+  - [Validating deployment completion](#validating-deployment-completion)
+  - [Running the performance benchmark tests](#running-the-performance-benchmark-tests)
+  - [Monitoring the execution of the running benchmark tests](#monitoring-the-execution-of-the-running-benchmark-tests)
+  - [Generating the results report](#generating-the-results-report)
+  - [Cleaning up](#cleaning-up)
+  - [Security](#security)
+  - [License](#license)
 
 
 ## Preparing the AWS account for deployment
+
+<!-- TODO: Update instructions for deployment without Cloud9. Test with CloudShell. -->
 
 All commands shown below are executed in a [Cloud9 environment](https://us-west-2.console.aws.amazon.com/cloud9control/home?region=us-west-2#/) 
 with Ubuntu. Choose an m5.large instance type. It is required to expand the disk to 70 GB. The 
@@ -116,7 +124,7 @@ This container is required for the build of the guppy and dorado container.
 Run the commands below to copy the container. Make sure you run the commands with AWS credentials for the us-west-2 
 region.
 ```shell
-cuda_container="nvidia/cuda:12.3.2-runtime-ubuntu20.04"
+cuda_container="nvidia/cuda:12.6.2-runtime-ubuntu20.04"
 aws ecr create-repository --repository-name 'nvidia/cuda' --region us-west-2
 docker login
 docker pull "$cuda_container"
@@ -133,8 +141,8 @@ Activate the Python virtual environment and install all required libraries:
 python -m venv .venv
 . ./.venv/bin/activate
 python -m ensurepip --upgrade
-python -m pip install --upgrade pip
-python -m pip install --upgrade virtualenv
+install --upgrade pip
+pip install --upgrade virtualenv
 pip install -r requirements.txt
 ```
 

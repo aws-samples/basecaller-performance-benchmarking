@@ -18,7 +18,7 @@ from cdk_nag import NagSuppressions
 from constructs import Construct
 
 dirname = os.path.dirname(__file__)
-ec2_client = boto3.client('ec2')
+ec2_client = boto3.client("ec2")
 
 
 class BatchComputeEnv(Construct):
@@ -34,20 +34,28 @@ class BatchComputeEnv(Construct):
 
         # EC2 instance role for AWS Batch container instances.
         self.ec2_instance_role = iam.Role(
-            self, "AWS Batch EC2 container instance role",
+            self,
+            "AWS Batch EC2 container instance role",
             assumed_by=iam.ServicePrincipal("ec2.amazonaws.com"),
             description="Role for EC2 instance created by AWS Batch",
         )
         self.ec2_instance_profile = iam.CfnInstanceProfile(
-            self, "AWS Batch EC2 container instance profile",
+            self,
+            "AWS Batch EC2 container instance profile",
             roles=[self.ec2_instance_role.role_name],
         )
 
         # Add standard management policies.
         self.ec2_instance_role.add_managed_policy(
-            iam.ManagedPolicy.from_aws_managed_policy_name('AmazonSSMManagedInstanceCore'))
+            iam.ManagedPolicy.from_aws_managed_policy_name(
+                "AmazonSSMManagedInstanceCore"
+            )
+        )
         self.ec2_instance_role.add_managed_policy(
-            iam.ManagedPolicy.from_aws_managed_policy_name('service-role/AmazonEC2ContainerServiceforEC2Role'))
+            iam.ManagedPolicy.from_aws_managed_policy_name(
+                "service-role/AmazonEC2ContainerServiceforEC2Role"
+            )
+        )
 
         # Allow the batch job to retrieve batch job descriptions and batch container instance
         # descriptions. This is used by a script within the job container to get information
@@ -56,11 +64,11 @@ class BatchComputeEnv(Construct):
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
                 actions=[
-                    'batch:DescribeJobs',
-                    'ecs:DescribeContainerInstances',
-                    'ec2:DescribeInstances',
+                    "batch:DescribeJobs",
+                    "ecs:DescribeContainerInstances",
+                    "ec2:DescribeInstances",
                 ],
-                resources=['*'],
+                resources=["*"],
             )
         )
 
@@ -71,36 +79,40 @@ class BatchComputeEnv(Construct):
         self.ec2_instance_role.add_to_policy(
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
-                actions=['cloudwatch:PutMetricData'],
-                resources=[f'arn:aws:cloudwatch:{region}:{account}:*'],
+                actions=["cloudwatch:PutMetricData"],
+                resources=[f"arn:aws:cloudwatch:{region}:{account}:*"],
             )
         )
 
         # Allow outbound communication
         self.sg_outbound = ec2.SecurityGroup(
-            self, 'SG outbound communication',
+            self,
+            "SG outbound communication",
             vpc=params.network.vpc,
-            description='SG outbound communication',
-            allow_all_outbound=True
+            description="SG outbound communication",
+            allow_all_outbound=True,
         )
 
         # Security groups for FSx for Lustre. Rules are based on
         # https://docs.aws.amazon.com/fsx/latest/LustreGuide/limit-access-security-groups.html
         self.sg_fsx_lustre_clients = ec2.SecurityGroup(
-            self, 'SG FSx for Lustre clients',
+            self,
+            "SG FSx for Lustre clients",
             vpc=params.network.vpc,
-            description='FSx for Lustre clients',
-            allow_all_outbound=False
+            description="FSx for Lustre clients",
+            allow_all_outbound=False,
         )
         # Inbound rules for FSx for Lustre clients.
         self.sg_fsx_lustre_clients.add_ingress_rule(
             ec2.Peer.ipv4(params.network.vpc.vpc_cidr_block),
-            ec2.Port.tcp_range(988, 1023), 'Allows Lustre traffic'
+            ec2.Port.tcp_range(988, 1023),
+            "Allows Lustre traffic",
         )
         # Outbound rules for FSx for Lustre clients.
         self.sg_fsx_lustre_clients.add_egress_rule(
             ec2.Peer.ipv4(params.network.vpc.vpc_cidr_block),
-            ec2.Port.tcp_range(988, 1023), 'Allows Lustre traffic'
+            ec2.Port.tcp_range(988, 1023),
+            "Allows Lustre traffic",
         )
 
         # For each instance type that supports x86_64 architecture and has an NVIDIA GPU create
@@ -109,37 +121,40 @@ class BatchComputeEnv(Construct):
         map_compute_environment_instance_type = {}
         self.instance_types = get_instance_types()
         for instance_type in self.instance_types.keys():
-            if 'EC2' in self.instance_types[instance_type]['ProvisioningModel']:
+            if "EC2" in self.instance_types[instance_type]["ProvisioningModel"]:
                 compute_environment = self.get_ec2_compute_env(instance_type, params)
-                self.instance_types[instance_type]['ProvisioningModel']['EC2'] = compute_environment.compute_environment_name
+                self.instance_types[instance_type]["ProvisioningModel"][
+                    "EC2"
+                ] = compute_environment.compute_environment_name
                 self.compute_environments.append(compute_environment)
                 # map_compute_environment_instance_type[compute_environment.compute_environment_name] = instance_type
-            if 'SPOT' in self.instance_types[instance_type]['ProvisioningModel']:
+            if "SPOT" in self.instance_types[instance_type]["ProvisioningModel"]:
                 compute_environment = self.get_spot_compute_env(instance_type, params)
                 self.compute_environments.append(compute_environment)
-                self.instance_types[instance_type]['ProvisioningModel']['SPOT'] = compute_environment.compute_environment_name
+                self.instance_types[instance_type]["ProvisioningModel"][
+                    "SPOT"
+                ] = compute_environment.compute_environment_name
                 # map_compute_environment_instance_type[compute_environment.compute_environment_name] = instance_type
 
         # Publish the list of instance types deployed as AWS Batch compute environments in Parameter Store. Other
         # tools can get the list of instance types dedicated for the performance
         # benchmarks (e.g. scripts to automate batch jobs creation) from Parameter Store.
-        with tempfile.NamedTemporaryFile(suffix='.json', mode='w') as temp:
+        with tempfile.NamedTemporaryFile(suffix=".json", mode="w") as temp:
             json.dump(self.instance_types, temp)
             temp.flush()  # force the data to be written to the temp file
-            file_asset = Asset(
-                self, 'instance types',
-                path=temp.name
-            )
+            file_asset = Asset(self, "instance types", path=temp.name)
         file_asset.grant_read(params.compute_env_update.update_compute_environments)
         ssm.StringParameter(
-            self, 'SSM parameter AWS Batch instance types',
-            parameter_name='/ONT-performance-benchmark/aws-batch-instance-types',
+            self,
+            "SSM parameter AWS Batch instance types",
+            parameter_name="/ONT-performance-benchmark/aws-batch-instance-types",
             string_value=file_asset.s3_object_url,
         ).grant_read(params.compute_env_update.update_compute_environments)
         ssm.StringParameter(
-            self, 'AWS Batch launch template',
-            parameter_name='/ONT-performance-benchmark/aws-batch-launch-template',
-            string_value=params.base_ami.launch_template.launch_template_id
+            self,
+            "AWS Batch launch template",
+            parameter_name="/ONT-performance-benchmark/aws-batch-launch-template",
+            string_value=params.base_ami.launch_template.launch_template_id,
         ).grant_read(params.compute_env_update.update_compute_environments)
 
         # ----------------------------------------------------------------
@@ -150,49 +165,49 @@ class BatchComputeEnv(Construct):
             construct=self.ec2_instance_role,
             suppressions=[
                 {
-                    'id': 'AwsSolutions-IAM4',
-                    'reason': 'We are using recommended AWS managed policies for AWS Systems Manager: '
-                              'https://aws.amazon.com/blogs/mt/applying-managed-instance-policy-best-practices/ and '
-                              'AWS managed role for ECS containers: '
-                              'https://docs.aws.amazon.com/batch/latest/userguide/instance_IAM_role.html',
-                    'appliesTo': [
-                        'Policy::arn:<AWS::Partition>:iam::aws:policy/AmazonSSMManagedInstanceCore',
-                        'Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role',
+                    "id": "AwsSolutions-IAM4",
+                    "reason": "We are using recommended AWS managed policies for AWS Systems Manager: "
+                    "https://aws.amazon.com/blogs/mt/applying-managed-instance-policy-best-practices/ and "
+                    "AWS managed role for ECS containers: "
+                    "https://docs.aws.amazon.com/batch/latest/userguide/instance_IAM_role.html",
+                    "appliesTo": [
+                        "Policy::arn:<AWS::Partition>:iam::aws:policy/AmazonSSMManagedInstanceCore",
+                        "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role",
                     ],
                 },
                 {
-                    'id': 'AwsSolutions-IAM5',
-                    'reason': 'Resource ARNs narrowed down to the minimum. Wildcards required.',
-                    'appliesTo': [
-                        f'Resource::arn:aws:batch:{region}:{account}:job/*',
-                        f'Resource::arn:aws:ecs:{region}:{account}:container-instance/*',
-                        f'Resource::arn:aws:cloudwatch:{region}:{account}:*',
-                    ]
+                    "id": "AwsSolutions-IAM5",
+                    "reason": "Resource ARNs narrowed down to the minimum. Wildcards required.",
+                    "appliesTo": [
+                        f"Resource::arn:aws:batch:{region}:{account}:job/*",
+                        f"Resource::arn:aws:ecs:{region}:{account}:container-instance/*",
+                        f"Resource::arn:aws:cloudwatch:{region}:{account}:*",
+                    ],
                 },
                 {
-                    'id': 'AwsSolutions-IAM5',
-                    'reason': 'The following actions do not support resource-level permissions and require to specify '
-                              'all resources ("*") in the Resource element of the policy statement:'
-                              '    ec2:DescribeInstances'
-                              '    batch:DescribeJobs'
-                              '    ecs:DescribeContainerInstances'
-                              'See also:'
-                              '    https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonec2.html'
-                              '    https://docs.aws.amazon.com/batch/latest/userguide/batch-supported-iam-actions-resources.html'
-                              '    https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security_iam_service-with-iam.html#ecs-supported-iam-actions-resources',
-                    'appliesTo': ['Resource::*'],
+                    "id": "AwsSolutions-IAM5",
+                    "reason": "The following actions do not support resource-level permissions and require to specify "
+                    'all resources ("*") in the Resource element of the policy statement:'
+                    "    ec2:DescribeInstances"
+                    "    batch:DescribeJobs"
+                    "    ecs:DescribeContainerInstances"
+                    "See also:"
+                    "    https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonec2.html"
+                    "    https://docs.aws.amazon.com/batch/latest/userguide/batch-supported-iam-actions-resources.html"
+                    "    https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security_iam_service-with-iam.html#ecs-supported-iam-actions-resources",
+                    "appliesTo": ["Resource::*"],
                 },
                 {
-                    'id': 'AwsSolutions-IAM5',
-                    'reason': 'Default read and write permissions generated by using CDK function grant_read_write().',
-                    'appliesTo': [
-                        f'Action::s3:Abort*',
-                        f'Action::s3:DeleteObject*',
-                        f'Action::s3:GetBucket*',
-                        f'Action::s3:GetObject*',
-                        f'Action::s3:List*',
-                        f'Resource::<{cdk.Stack.of(self).get_logical_id(params.data.bucket.node.default_child)}.Arn>/*',
-                    ]
+                    "id": "AwsSolutions-IAM5",
+                    "reason": "Default read and write permissions generated by using CDK function grant_read_write().",
+                    "appliesTo": [
+                        f"Action::s3:Abort*",
+                        f"Action::s3:DeleteObject*",
+                        f"Action::s3:GetBucket*",
+                        f"Action::s3:GetObject*",
+                        f"Action::s3:List*",
+                        f"Resource::<{cdk.Stack.of(self).get_logical_id(params.data.bucket.node.default_child)}.Arn>/*",
+                    ],
                 },
             ],
             apply_to_children=True,
@@ -202,12 +217,12 @@ class BatchComputeEnv(Construct):
             construct=self.sg_fsx_lustre_clients,
             suppressions=[
                 {
-                    'id': 'CdkNagValidationFailure',
-                    'reason': 'Outbound and inbound address ranges are limited to IP range of AWS Batch '
-                              'compute instances.\n\n'
-                              'Supressing warning that is caused by a parameter referencing an intrinsic function. '
-                              'Rule AwsSolutions-EC23 could not be validated as the parameter resolved to to a '
-                              'non-primitive value. This is expected behaviour of cdk-nag.'
+                    "id": "CdkNagValidationFailure",
+                    "reason": "Outbound and inbound address ranges are limited to IP range of AWS Batch "
+                    "compute instances.\n\n"
+                    "Supressing warning that is caused by a parameter referencing an intrinsic function. "
+                    "Rule AwsSolutions-EC23 could not be validated as the parameter resolved to to a "
+                    "non-primitive value. This is expected behaviour of cdk-nag.",
                 },
             ],
             apply_to_children=True,
@@ -215,14 +230,15 @@ class BatchComputeEnv(Construct):
 
     def get_ec2_compute_env(self, instance_type, params):
         return batch.CfnComputeEnvironment(
-            self, instance_type.replace('.', '-'),
-            type='MANAGED',
-            state='ENABLED',
-            compute_environment_name=instance_type.replace('.', '-'),
+            self,
+            instance_type.replace(".", "-"),
+            type="MANAGED",
+            state="ENABLED",
+            compute_environment_name=instance_type.replace(".", "-"),
             compute_resources=batch.CfnComputeEnvironment.ComputeResourcesProperty(
-                type='EC2',
+                type="EC2",
                 instance_types=[instance_type],
-                allocation_strategy='BEST_FIT_PROGRESSIVE',
+                allocation_strategy="BEST_FIT_PROGRESSIVE",
                 minv_cpus=0,
                 maxv_cpus=4000,
                 subnets=params.network.subnets.subnet_ids,
@@ -233,21 +249,22 @@ class BatchComputeEnv(Construct):
                 instance_role=self.ec2_instance_profile.attr_arn,
                 launch_template=batch.CfnComputeEnvironment.LaunchTemplateSpecificationProperty(
                     launch_template_id=params.base_ami.launch_template.launch_template_id,
-                    version='$Default'
+                    version="$Default",
                 ),
-            )
+            ),
         )
 
     def get_spot_compute_env(self, instance_type, params):
         return batch.CfnComputeEnvironment(
-            self, instance_type.replace('.', '-') + '-spot',
-            type='MANAGED',
-            state='ENABLED',
-            compute_environment_name=instance_type.replace('.', '-') + '-spot',
+            self,
+            instance_type.replace(".", "-") + "-spot",
+            type="MANAGED",
+            state="ENABLED",
+            compute_environment_name=instance_type.replace(".", "-") + "-spot",
             compute_resources=batch.CfnComputeEnvironment.ComputeResourcesProperty(
-                type='SPOT',
+                type="SPOT",
                 instance_types=[instance_type],
-                allocation_strategy='BEST_FIT_PROGRESSIVE',
+                allocation_strategy="BEST_FIT_PROGRESSIVE",
                 bid_percentage=100,
                 minv_cpus=0,
                 maxv_cpus=4000,
@@ -259,16 +276,22 @@ class BatchComputeEnv(Construct):
                 instance_role=self.ec2_instance_profile.attr_arn,
                 launch_template=batch.CfnComputeEnvironment.LaunchTemplateSpecificationProperty(
                     launch_template_id=params.base_ami.launch_template.launch_template_id,
-                    version='$Default'
+                    version="$Default",
                 ),
-            )
+            ),
         )
 
 
 def get_instance_types():
     """
     Get instance types with filter.
+
+    Note 2024/11/06: AWS made a change to the AWS Deep Learning AMIs (DLAMI), for details see: https://docs.aws.amazon.com/dlami/latest/devguide/important-changes.html
+    Because of this change, p3* instances have been excluded from the list of instance types.
+    This project only supports instance types that run with the "Deep Learning OSS Nvidia Driver AMI".
     """
+
+    ec2_client = boto3.client("ec2")
 
     # If set to 'True', only validated instance types will be returned. This limits the number of
     # AWS Batch compute environments. AWS Batch has a limit of 50 compute environments per account.
@@ -276,21 +299,36 @@ def get_instance_types():
 
     # The instance types listed here have been tested in the performance benchmark
     validated_instances = [
-        'g4dn.metal', 'g4dn.xlarge', 'g4dn.2xlarge', 'g4dn.4xlarge', 'g4dn.8xlarge', 'g4dn.12xlarge',
-        'g4dn.16xlarge',
-        'g5.xlarge', 'g5.2xlarge', 'g5.4xlarge', 'g5.8xlarge', 'g5.12xlarge', 'g5.16xlarge', 'g5.24xlarge',
-        'g5.48xlarge',
-        'p3.2xlarge', 'p3.8xlarge', 'p3.16xlarge', 'p3dn.24xlarge',
-        'p4d.24xlarge', 'p5.48xlarge',
+        "g4dn.metal",
+        "g4dn.xlarge",
+        "g4dn.2xlarge",
+        "g4dn.4xlarge",
+        "g4dn.8xlarge",
+        "g4dn.12xlarge",
+        "g4dn.16xlarge",
+        "g5.xlarge",
+        "g5.2xlarge",
+        "g5.4xlarge",
+        "g5.8xlarge",
+        "g5.12xlarge",
+        "g5.16xlarge",
+        "g5.24xlarge",
+        "g5.48xlarge",
+        "p4d.24xlarge",
+        "p5.48xlarge",
     ]
 
     # List of instance types for which we create spot compute environments in AWS Batch.
     spot_instance_types = [
-        'p5.48xlarge',
-        'p4d.24xlarge',
-        'p3dn.24xlarge', 'p3.16xlarge', 'p3.8xlarge', 'p3.2xlarge',
-        'g5.xlarge', 'g5.2xlarge', 'g5.12xlarge', 'g5.24xlarge', 'g5.48xlarge',
-        'g4dn.metal', 'g4dn.12xlarge',
+        "p5.48xlarge",
+        "p4d.24xlarge",
+        "g5.xlarge",
+        "g5.2xlarge",
+        "g5.12xlarge",
+        "g5.24xlarge",
+        "g5.48xlarge",
+        "g4dn.metal",
+        "g4dn.12xlarge",
     ]
 
     instance_types = {}
@@ -298,22 +336,22 @@ def get_instance_types():
     while True:
         results = ec2_client.describe_instance_types(**describe_args)
         for result in filter_results(results):
-            if use_only_validated and result['InstanceType'] not in validated_instances:
+            if use_only_validated and result["InstanceType"] not in validated_instances:
                 continue
-            instance_types[result['InstanceType']] = {
-                'ProcessorInfo': result['ProcessorInfo'],
-                'VCpuInfo': result['VCpuInfo'],
-                'MemoryInfo': result['MemoryInfo'],
-                'GpuInfo': result['GpuInfo'],
-                'ProvisioningModel': {
-                    'EC2': '',  # EC2 = on-demand is the default provisioning model
+            instance_types[result["InstanceType"]] = {
+                "ProcessorInfo": result["ProcessorInfo"],
+                "VCpuInfo": result["VCpuInfo"],
+                "MemoryInfo": result["MemoryInfo"],
+                "GpuInfo": result["GpuInfo"],
+                "ProvisioningModel": {
+                    "EC2": "",  # EC2 = on-demand is the default provisioning model
                 },
             }
-            if result['InstanceType'] in spot_instance_types:
-                instance_types[result['InstanceType']]['ProvisioningModel']['SPOT'] = ''
-        if 'NextToken' not in results:
+            if result["InstanceType"] in spot_instance_types:
+                instance_types[result["InstanceType"]]["ProvisioningModel"]["SPOT"] = ""
+        if "NextToken" not in results:
             break
-        describe_args['NextToken'] = results['NextToken']
+        describe_args["NextToken"] = results["NextToken"]
 
     return instance_types
 
@@ -324,24 +362,24 @@ def filter_results(results):
     """
     gpu_instances = [
         instance_type
-        for instance_type in results['InstanceTypes']
-        if 'GpuInfo' in instance_type
+        for instance_type in results["InstanceTypes"]
+        if "GpuInfo" in instance_type
     ]
     NVIDIA_gpu_instances = [
         instance_type
         for instance_type in gpu_instances
-        for gpu in instance_type['GpuInfo']['Gpus']
-        if gpu['Manufacturer'] == 'NVIDIA'
+        for gpu in instance_type["GpuInfo"]["Gpus"]
+        if gpu["Manufacturer"] == "NVIDIA"
     ]
     x86_64_NVIDIA_gpu_instances = [
         {
-            'InstanceType': instance_type['InstanceType'],
-            'ProcessorInfo': instance_type['ProcessorInfo'],
-            'VCpuInfo': instance_type['VCpuInfo'],
-            'MemoryInfo': instance_type['MemoryInfo'],
-            'GpuInfo': instance_type['GpuInfo'],
+            "InstanceType": instance_type["InstanceType"],
+            "ProcessorInfo": instance_type["ProcessorInfo"],
+            "VCpuInfo": instance_type["VCpuInfo"],
+            "MemoryInfo": instance_type["MemoryInfo"],
+            "GpuInfo": instance_type["GpuInfo"],
         }
         for instance_type in NVIDIA_gpu_instances
-        if 'x86_64' in instance_type['ProcessorInfo']['SupportedArchitectures']
+        if "x86_64" in instance_type["ProcessorInfo"]["SupportedArchitectures"]
     ]
     return x86_64_NVIDIA_gpu_instances

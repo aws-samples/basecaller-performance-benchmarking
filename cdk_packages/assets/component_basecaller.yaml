@@ -9,7 +9,7 @@ parameters:
       description: S3 path to the basecaller run script.
   - DoradoURL:
       type: string
-      default: "https://cdn.oxfordnanoportal.com/software/analysis/dorado-0.5.3-linux-x64.tar.gz"
+      default: "https://cdn.oxfordnanoportal.com/software/analysis/dorado-0.8.2-linux-x64.tar.gz"
       description: Download URL for the dorado basecaller.
 
 phases:
