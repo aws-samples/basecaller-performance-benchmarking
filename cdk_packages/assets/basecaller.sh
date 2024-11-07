@@ -19,12 +19,11 @@ echo "data set ID: $DATA_SET_ID"
 echo "compute environment: $AWS_BATCH_CE_NAME"
 echo "region: $REGION"
 
-print# Get ID and type of EC2 instance on which this job runs.
+# Get ID and type of EC2 instance on which this job runs.
 container_instance_arn=$(aws batch describe-jobs --jobs "$AWS_BATCH_JOB_ID" --query "jobs[0].container.containerInstanceArn" --output text)
 tmp=${container_instance_arn#*/}
 cluster_name=${tmp%/*}
 ec2_instance_id=$(aws ecs describe-container-instances --container-instances "$container_instance_arn" --cluster "$cluster_name" --query "containerInstances[0].ec2InstanceId" --output text)
-aws ec2 describe-instances --region "$REGION" --instance-ids "$ec2_instance_id"
 ec2_instance_type=$(aws ec2 describe-instances --region "$REGION" --instance-ids "$ec2_instance_id" --query "Reservations[0].Instances[0].InstanceType" --output text)
 echo "EC2 instance ID: $ec2_instance_id"
 echo "EC2 instance type: $ec2_instance_type"
@@ -89,8 +88,10 @@ aws dynamodb put-item --table-name "$reports_table" \
 # ---------- run basecaller --------------------
 echo "starting basecaller:"
 echo "$command$parameters"
+mkdir -p /fsx/basecaller_logs
 basecaller_name=""
 basecaller_version=""
+
 if [ "$command" == "guppy_basecaller" ]; then
   basecaller_name="guppy"
   basecaller_version=$(guppy_basecaller --version | grep -oP "(?<=Version )[0-9]+\.[0-9]+\.[0-9]+")
@@ -98,14 +99,20 @@ if [ "$command" == "guppy_basecaller" ]; then
   # Do not place $parameters in quotation marks! Will cause "Unexpected token '[...]' on command-line" error.
   guppy_basecaller $parameters |& tee guppy_basecaller.log
   ret="${PIPESTATUS[0]}"
+  # keep a copy of the basecaller log file on the FSX file system for easier troubleshooting
+  cp guppy_basecaller.log /fsx/basecaller_logs/$ec2_instance_id"_"$AWS_BATCH_JOB_ID"_"guppy_basecaller.log
 fi
+
 if [ "$command" == "dorado" ]; then
   basecaller_name="dorado"
   basecaller_version=$(eval "dorado --version" |& grep -oP "[0-9]+\.[0-9]+\.[0-9]+")
   echo "basecaller: $basecaller_name v$basecaller_version"
   eval "dorado""$parameters" |& tee dorado.log
   ret="${PIPESTATUS[0]}"
+  # keep a copy of the basecaller log file on the FSX file system for easier troubleshooting
+  cp dorado.log /fsx/basecaller_logs/$ec2_instance_id"_"$AWS_BATCH_JOB_ID"_"dorado.log
 fi
+
 echo "return code from basecaller = $ret"
 # ----------------------------------------------
 
@@ -143,8 +150,8 @@ else
   fi
   if [ "$command" == "dorado" ]; then
     selected_batch_size=$(grep -oP "(?<=selected batchsize )[0-9]+" dorado.log)
-    reads_basecalled=$(grep -oP "(?<=[rR]eads basecalled: )[0-9]+" dorado.log)
-    samples_per_s=$(grep -oP "(?<=Samples/s: )[0-9]+\.[0-9]+e\+[0-9]+" dorado.log)
+    reads_basecalled=$(grep -oP "(?<=[rR]eads basecalled: )[0-9]+$" dorado.log)
+    samples_per_s=$(grep -oP "(?<=Basecalled @ Samples\/s: )[0-9]+\.[0-9]+e\+[0-9]+$" dorado.log)
   fi
   aws dynamodb put-item --table-name "$reports_table" \
     --item '{

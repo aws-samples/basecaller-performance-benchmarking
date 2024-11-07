@@ -60,14 +60,19 @@ if [ ! -f "${INDICATOR}" ]; then
     sleep 60
 fi
 
-echo ----- install Pod5 -----
+# echo ----- install Pod5 -----
 
 INDICATOR=/var/tmp/indicator-install-pod5
 if [ ! -f "${INDICATOR}" ]; then
     apt-get install python3-pip -y
+    pip install --upgrade pip setuptools wheel
+    apt-get install pkg-config libhdf5-serial-dev python3-h5py -y
     pip install pod5
     pip install pandas
     touch "${INDICATOR}"
+    echo "Reboot to activate new kernel from h5py installation."
+    shutdown -r now
+    sleep 60
 fi
 
 echo ----- get token to access instance metadata -----
@@ -107,13 +112,20 @@ echo ----- convert FAST5 to POD5 -----
 
 INDICATOR=/var/tmp/indicator-convert-fast5-to-pod5
 if [ ! -f "${INDICATOR}" ]; then
-    ## For details about how top convert FAST5 to POD5 please see
+    ## For details about how to convert FAST5 to POD5 please see
     ## https://github.com/nanoporetech/pod5-file-format/blob/master/python/pod5/README.md
     aws ssm put-parameter --name /ONT-performance-benchmark/pod5-converter-status --value "in progress" --overwrite --output text
     num_fast5_files=$(find /fsx/fast5-all-files -name "*.fast5" | wc -l)
     echo "Total number of fast5 files: ${num_fast5_files}"
     pod5 convert fast5 /fsx/fast5-all-files/*.fast5 --output /fsx/pod5-all-files/ --one-to-one /fsx/fast5-all-files/ --threads 20 --strict --force-overwrite
-    aws ssm put-parameter --name /ONT-performance-benchmark/pod5-converter-status --value "completed" --overwrite --output text
+    num_fast5_files=$(find /fsx/fast5-all-files -name "*.fast5" | wc -l)
+    num_pod5_files=$(find /fsx/pod5-all-files -name "*.pod5" | wc -l)
+    echo "Found $num_fast5_files FAST5 files. Found $num_pod5_files POD5 files."
+    if [[ $num_fast5_files -eq $num_pod5_files ]] && [[ $num_fast5_files -gt 0 ]]; then
+        aws ssm put-parameter --name /ONT-performance-benchmark/pod5-converter-status --value "completed" --overwrite --output text
+    else
+        echo "ERROR: A problem occurred during conversion. The number of FAST5 and POD5 files don't match."
+    fi
     touch "${INDICATOR}"
 fi
 
@@ -129,6 +141,7 @@ fi
 
 echo ----- check download and conversion results -----
 
+num_fast5_files=$(find /fsx/fast5-all-files -name "*.fast5" | wc -l)
 num_pod5_files=$(find /fsx/pod5-all-files -name "*.pod5" | wc -l)
 echo "$num_fast5_files FAST5 files downloaded and converted to $num_pod5_files POD5 files."
 if [[ $num_fast5_files -eq $num_pod5_files ]] && [[ $num_fast5_files -gt 0 ]]; then

@@ -17,8 +17,9 @@ ssm_client = boto3.client("ssm")
 aws_region_name = boto3.session.Session().region_name
 account_id = boto3.client("sts").get_caller_identity().get("Account")
 
-BASECALLER_DORADO_0_3_0 = f"{account_id}.dkr.ecr.{aws_region_name}.amazonaws.com/basecaller_guppy_latest_dorado0.3.0:latest"
+
 BASECALLER_DORADO_0_5_3 = f"{account_id}.dkr.ecr.{aws_region_name}.amazonaws.com/basecaller_guppy_latest_dorado0.5.3:latest"
+BASECALLER_DORADO_0_8_2 = f"{account_id}.dkr.ecr.{aws_region_name}.amazonaws.com/basecaller_guppy_latest_dorado0.8.2:latest"
 
 gupppy_no_modified_bases = (
     "guppy_basecaller "
@@ -113,33 +114,63 @@ def main():
     # deregister_all_job_definitions()  # <-- run this command to delete all job definitions
 
     compute = [
-        {"instance_type": "g5.48xlarge", "provisioning_model": "SPOT"},
+        {"instance_type": "p5.48xlarge", "provisioning_model": "SPOT"},  # H100
+        {"instance_type": "p4d.24xlarge", "provisioning_model": "EC2"},  # A100
+        {"instance_type": "g5.48xlarge", "provisioning_model": "SPOT"},  # A10G
     ]
 
-    # # create guppy jobs
-    aws_batch_env.create_batch_jobs(
-        compute, cmd=gupppy_no_modified_bases, tags="guppy, no modified bases"
-    )
-    aws_batch_env.create_batch_jobs(
-        compute, cmd=gupppy_modified_bases_5mCG, tags="guppy, modified bases 5mCG"
-    )
-    aws_batch_env.create_batch_jobs(
-        compute,
-        cmd=gupppy_modified_bases_5mCG_5hmCG,
-        tags="guppy, modified bases 5mCG & 5hmCG",
-    )
+    # Uncomment to run performance benchmark against a larger set of instance types.
+    # CAUTION: Please be aware of the cost implication of running a large number
+    # of large EC2 instances (e.g. p5)!
+    # compute = [
+    #     {'instance_type': 'p5.48xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g5.48xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'p4d.24xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'p3dn.24xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g5.xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g5.2xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g5.12xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g5.24xlarge', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g4dn.metal', 'provisioning_model': 'SPOT'},
+    #     {'instance_type': 'g4dn.12xlarge', 'provisioning_model': 'SPOT'},
+    # ]
 
     # create dorado jobs
     aws_batch_env.create_batch_jobs(
-        compute, cmd=dorado_no_modified_bases, tags="dorado, no modified bases"
-    )
-    aws_batch_env.create_batch_jobs(
-        compute, cmd=dorado_modified_bases_5mCG, tags="dorado, modified bases 5mCG"
+        compute,
+        container=BASECALLER_DORADO_0_8_2,
+        cmd=dorado_no_modified_bases,
+        tags="dorado v0.8.2, no modified bases",
     )
     aws_batch_env.create_batch_jobs(
         compute,
+        container=BASECALLER_DORADO_0_5_3,
+        cmd=dorado_no_modified_bases,
+        tags="dorado v0.5.3, no modified bases",
+    )
+    aws_batch_env.create_batch_jobs(
+        compute,
+        container=BASECALLER_DORADO_0_8_2,
+        cmd=dorado_modified_bases_5mCG,
+        tags="dorado v0.8.2, modified bases 5mCG",
+    )
+    aws_batch_env.create_batch_jobs(
+        compute,
+        container=BASECALLER_DORADO_0_5_3,
+        cmd=dorado_modified_bases_5mCG,
+        tags="dorado v0.5.3, modified bases 5mCG",
+    )
+    aws_batch_env.create_batch_jobs(
+        compute,
+        container=BASECALLER_DORADO_0_8_2,
         cmd=dorado_modified_bases_5mCG_5hmCG,
-        tags="dorado, modified bases 5mCG & 5hmCG",
+        tags="dorado v0.8.2, modified bases 5mCG & 5hmCG",
+    )
+    aws_batch_env.create_batch_jobs(
+        compute,
+        container=BASECALLER_DORADO_0_5_3,
+        cmd=dorado_modified_bases_5mCG_5hmCG,
+        tags="dorado v0.5.3, modified bases 5mCG & 5hmCG",
     )
 
 
