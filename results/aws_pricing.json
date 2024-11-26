@@ -1,0 +1,324 @@
+{
+    "price_list_date": "2024-11-07 13:58:16",
+    "currency": "USD",
+    "instances": {
+        "us-west-2": {
+            "g5.2xlarge": {
+                "cost_per_hour": "1.2120000000"
+            },
+            "g5.4xlarge": {
+                "cost_per_hour": "1.6240000000"
+            },
+            "g4dn.12xlarge": {
+                "cost_per_hour": "3.9120000000"
+            },
+            "g4dn.metal": {
+                "cost_per_hour": "7.8240000000"
+            },
+            "g5.24xlarge": {
+                "cost_per_hour": "8.1440000000"
+            },
+            "g5.12xlarge": {
+                "cost_per_hour": "5.6720000000"
+            },
+            "p4d.24xlarge": {
+                "cost_per_hour": "32.7726000000"
+            },
+            "p5.48xlarge": {
+                "cost_per_hour": "98.3200000000"
+            },
+            "g4dn.xlarge": {
+                "cost_per_hour": "0.5260000000"
+            },
+            "g5.16xlarge": {
+                "cost_per_hour": "4.0960000000"
+            },
+            "g5.xlarge": {
+                "cost_per_hour": "1.0060000000"
+            },
+            "g4dn.16xlarge": {
+                "cost_per_hour": "4.3520000000"
+            },
+            "g5.8xlarge": {
+                "cost_per_hour": "2.4480000000"
+            },
+            "g5.48xlarge": {
+                "cost_per_hour": "16.2880000000"
+            },
+            "g4dn.4xlarge": {
+                "cost_per_hour": "1.2040000000"
+            },
+            "g4dn.2xlarge": {
+                "cost_per_hour": "0.7520000000"
+            },
+            "g4dn.8xlarge": {
+                "cost_per_hour": "2.1760000000"
+            }
+        },
+        "us-east-1": {
+            "g5.2xlarge": {
+                "cost_per_hour": "1.2120000000"
+            },
+            "g5.4xlarge": {
+                "cost_per_hour": "1.6240000000"
+            },
+            "g4dn.12xlarge": {
+                "cost_per_hour": "3.9120000000"
+            },
+            "g4dn.metal": {
+                "cost_per_hour": "7.8240000000"
+            },
+            "g5.24xlarge": {
+                "cost_per_hour": "8.1440000000"
+            },
+            "g5.12xlarge": {
+                "cost_per_hour": "5.6720000000"
+            },
+            "p4d.24xlarge": {
+                "cost_per_hour": "32.7726000000"
+            },
+            "p5.48xlarge": {
+                "cost_per_hour": "98.3200000000"
+            },
+            "g4dn.xlarge": {
+                "cost_per_hour": "0.5260000000"
+            },
+            "g5.16xlarge": {
+                "cost_per_hour": "4.0960000000"
+            },
+            "g5.xlarge": {
+                "cost_per_hour": "1.0060000000"
+            },
+            "g4dn.16xlarge": {
+                "cost_per_hour": "4.3520000000"
+            },
+            "g5.8xlarge": {
+                "cost_per_hour": "2.4480000000"
+            },
+            "g5.48xlarge": {
+                "cost_per_hour": "16.2880000000"
+            },
+            "g4dn.4xlarge": {
+                "cost_per_hour": "1.2040000000"
+            },
+            "g4dn.2xlarge": {
+                "cost_per_hour": "0.7520000000"
+            },
+            "g4dn.8xlarge": {
+                "cost_per_hour": "2.1760000000"
+            }
+        },
+        "eu-central-1": {
+            "g5.2xlarge": {
+                "cost_per_hour": "1.5156000000"
+            },
+            "g5.4xlarge": {
+                "cost_per_hour": "2.0308100000"
+            },
+            "g4dn.12xlarge": {
+                "cost_per_hour": "4.8900000000"
+            },
+            "g4dn.metal": {
+                "cost_per_hour": "9.7800000000"
+            },
+            "g5.24xlarge": {
+                "cost_per_hour": "10.1840500000"
+            },
+            "g5.12xlarge": {
+                "cost_per_hour": "7.0928200000"
+            },
+            "p4d.24xlarge": {
+                "cost_per_hour": "40.9447500000"
+            },
+            "p5.48xlarge": {
+                "cost_per_hour": null
+            },
+            "g4dn.xlarge": {
+                "cost_per_hour": "0.6580000000"
+            },
+            "g5.16xlarge": {
+                "cost_per_hour": "5.1220400000"
+            },
+            "g5.xlarge": {
+                "cost_per_hour": "1.2580000000"
+            },
+            "g4dn.16xlarge": {
+                "cost_per_hour": "5.4400000000"
+            },
+            "g5.8xlarge": {
+                "cost_per_hour": "3.0612200000"
+            },
+            "g5.48xlarge": {
+                "cost_per_hour": "20.3681000000"
+            },
+            "g4dn.4xlarge": {
+                "cost_per_hour": "1.5050000000"
+            },
+            "g4dn.2xlarge": {
+                "cost_per_hour": "0.9400000000"
+            },
+            "g4dn.8xlarge": {
+                "cost_per_hour": "2.7200000000"
+            }
+        },
+        "eu-west-1": {
+            "g5.2xlarge": {
+                "cost_per_hour": "1.3529600000"
+            },
+            "g5.4xlarge": {
+                "cost_per_hour": "1.8128700000"
+            },
+            "g4dn.12xlarge": {
+                "cost_per_hour": "4.3620000000"
+            },
+            "g4dn.metal": {
+                "cost_per_hour": "8.7240000000"
+            },
+            "g5.24xlarge": {
+                "cost_per_hour": "9.0911700000"
+            },
+            "g5.12xlarge": {
+                "cost_per_hour": "6.3316700000"
+            },
+            "p4d.24xlarge": {
+                "cost_per_hour": "35.3965500000"
+            },
+            "p5.48xlarge": {
+                "cost_per_hour": null
+            },
+            "g4dn.xlarge": {
+                "cost_per_hour": "0.5870000000"
+            },
+            "g5.16xlarge": {
+                "cost_per_hour": "4.5723700000"
+            },
+            "g5.xlarge": {
+                "cost_per_hour": "1.1230000000"
+            },
+            "g4dn.16xlarge": {
+                "cost_per_hour": "4.8530000000"
+            },
+            "g5.8xlarge": {
+                "cost_per_hour": "2.7327100000"
+            },
+            "g5.48xlarge": {
+                "cost_per_hour": "18.1823300000"
+            },
+            "g4dn.4xlarge": {
+                "cost_per_hour": "1.3420000000"
+            },
+            "g4dn.2xlarge": {
+                "cost_per_hour": "0.8380000000"
+            },
+            "g4dn.8xlarge": {
+                "cost_per_hour": "2.4260000000"
+            }
+        },
+        "eu-west-2": {
+            "g5.2xlarge": {
+                "cost_per_hour": "1.5384900000"
+            },
+            "g5.4xlarge": {
+                "cost_per_hour": "2.0614800000"
+            },
+            "g4dn.12xlarge": {
+                "cost_per_hour": "4.5770000000"
+            },
+            "g4dn.metal": {
+                "cost_per_hour": "9.1540000000"
+            },
+            "g5.24xlarge": {
+                "cost_per_hour": "10.3378600000"
+            },
+            "g5.12xlarge": {
+                "cost_per_hour": "7.1999400000"
+            },
+            "p4d.24xlarge": {
+                "cost_per_hour": null
+            },
+            "p5.48xlarge": {
+                "cost_per_hour": "127.8160000000"
+            },
+            "g4dn.xlarge": {
+                "cost_per_hour": "0.6150000000"
+            },
+            "g5.16xlarge": {
+                "cost_per_hour": "5.1994000000"
+            },
+            "g5.xlarge": {
+                "cost_per_hour": "1.2770000000"
+            },
+            "g4dn.16xlarge": {
+                "cost_per_hour": "5.0920000000"
+            },
+            "g5.8xlarge": {
+                "cost_per_hour": "3.1074500000"
+            },
+            "g5.48xlarge": {
+                "cost_per_hour": "20.6757200000"
+            },
+            "g4dn.4xlarge": {
+                "cost_per_hour": "1.4090000000"
+            },
+            "g4dn.2xlarge": {
+                "cost_per_hour": "0.8800000000"
+            },
+            "g4dn.8xlarge": {
+                "cost_per_hour": "2.5460000000"
+            }
+        },
+        "me-south-1": {
+            "g5.2xlarge": {
+                "cost_per_hour": null
+            },
+            "g5.4xlarge": {
+                "cost_per_hour": null
+            },
+            "g4dn.12xlarge": {
+                "cost_per_hour": "4.7980000000"
+            },
+            "g4dn.metal": {
+                "cost_per_hour": "9.5960000000"
+            },
+            "g5.24xlarge": {
+                "cost_per_hour": null
+            },
+            "g5.12xlarge": {
+                "cost_per_hour": null
+            },
+            "p4d.24xlarge": {
+                "cost_per_hour": null
+            },
+            "p5.48xlarge": {
+                "cost_per_hour": null
+            },
+            "g4dn.xlarge": {
+                "cost_per_hour": "0.6450000000"
+            },
+            "g5.16xlarge": {
+                "cost_per_hour": null
+            },
+            "g5.xlarge": {
+                "cost_per_hour": null
+            },
+            "g4dn.16xlarge": {
+                "cost_per_hour": "5.3380000000"
+            },
+            "g5.8xlarge": {
+                "cost_per_hour": null
+            },
+            "g5.48xlarge": {
+                "cost_per_hour": null
+            },
+            "g4dn.4xlarge": {
+                "cost_per_hour": "1.4770000000"
+            },
+            "g4dn.2xlarge": {
+                "cost_per_hour": "0.9220000000"
+            },
+            "g4dn.8xlarge": {
+                "cost_per_hour": "2.6690000000"
+            }
+        }
+    }
+}

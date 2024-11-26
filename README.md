@@ -92,18 +92,19 @@ All commands shown below are executed in a [Cloud9 environment](https://us-west-
 with Ubuntu. Choose an m5.large instance type. It is required to expand the disk to 70 GB. The 
 code repository contains the script `resize.sh` to automate the disk resizing.
 
-After your Cloud) environment has started, clone the code repository and resize the disk to 70 GB:
+When using CloudShell, switch directory for more space:
+```shell
+cd /home
+sudo mkdir -p deployment
+sudo chown cloudshell-user:cloudshell-user deployment
+sudo chmod 777 deployment
+cd deployment
+```
+
+After your Cloud9 environment has started, clone the code repository and resize the disk to 70 GB:
 ```shell
 git clone https://github.com/aws-samples/basecaller-performance-benchmarking.git
 cd basecaller-performance-benchmarking/
- . ./resize.sh 70
-```
-
-Check the disk size:
-```shell
-df -h
-Filesystem      Size  Used Avail Use% Mounted on
-/dev/root        68G  6.4G   62G  10% /
 ```
 
 This project performs a fully automated deployment of the performance benchmarking environment. The project utilizes 
@@ -134,6 +135,13 @@ aws ecr get-login-password --region us-west-2 | docker login --username AWS --pa
 docker push "$aws_account_id.dkr.ecr.us-west-2.amazonaws.com/$cuda_container"
 ```
 
+You may want to free up space in the CloudShell by removing copies of Docker images.
+The following command removes all Docker images stored in the CloudShell. Use with caution.
+Adjust in case you want to delete only selected Docker images.
+```shell
+docker rmi $(docker images -q)
+```
+
 ## Deploying the project
 
 Activate the Python virtual environment and install all required libraries:
@@ -141,27 +149,27 @@ Activate the Python virtual environment and install all required libraries:
 python -m venv .venv
 . ./.venv/bin/activate
 python -m ensurepip --upgrade
-install --upgrade pip
+pip install --upgrade pip
 pip install --upgrade virtualenv
 pip install -r requirements.txt
 ```
 
-Bootstrap the CDK environment. If you work with CDK regularly, you may have done this earlier.  
+Bootstrap the CDK environment.
 ```shell
-npm install -g aws-cdk
-cdk bootstrap
+npm install aws-cdk
+npx cdk bootstrap
 ```
 
 Run the following command to deploy the project.
 ```shell
-cdk deploy --all
+npx cdk deploy --all
 ```
 
 The project consists of multiple stacks. If you don't wish to manually confirm the deployment of each stack and the 
 security settings, you can run deployment with the following parameters: `--require-approval never` saves you from 
 confirming the security settings and `--no-prompts` removes the manual confirmation before deployment of each stack.
 ```shell
-cdk deploy --all --require-approval never --no-prompts
+npx cdk deploy --all --require-approval never --no-prompts
 ```
 
 ## Validating deployment completion

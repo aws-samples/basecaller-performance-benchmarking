@@ -115,8 +115,8 @@ def main():
 
     compute = [
         {"instance_type": "p5.48xlarge", "provisioning_model": "SPOT"},  # H100
-        {"instance_type": "p4d.24xlarge", "provisioning_model": "EC2"},  # A100
-        {"instance_type": "g5.48xlarge", "provisioning_model": "SPOT"},  # A10G
+        # {"instance_type": "p4d.24xlarge", "provisioning_model": "EC2"},  # A100
+        # {"instance_type": "g5.48xlarge", "provisioning_model": "EC2"},  # A10G
     ]
 
     # Uncomment to run performance benchmark against a larger set of instance types.
@@ -142,36 +142,36 @@ def main():
         cmd=dorado_no_modified_bases,
         tags="dorado v0.8.2, no modified bases",
     )
-    aws_batch_env.create_batch_jobs(
-        compute,
-        container=BASECALLER_DORADO_0_5_3,
-        cmd=dorado_no_modified_bases,
-        tags="dorado v0.5.3, no modified bases",
-    )
-    aws_batch_env.create_batch_jobs(
-        compute,
-        container=BASECALLER_DORADO_0_8_2,
-        cmd=dorado_modified_bases_5mCG,
-        tags="dorado v0.8.2, modified bases 5mCG",
-    )
-    aws_batch_env.create_batch_jobs(
-        compute,
-        container=BASECALLER_DORADO_0_5_3,
-        cmd=dorado_modified_bases_5mCG,
-        tags="dorado v0.5.3, modified bases 5mCG",
-    )
-    aws_batch_env.create_batch_jobs(
-        compute,
-        container=BASECALLER_DORADO_0_8_2,
-        cmd=dorado_modified_bases_5mCG_5hmCG,
-        tags="dorado v0.8.2, modified bases 5mCG & 5hmCG",
-    )
-    aws_batch_env.create_batch_jobs(
-        compute,
-        container=BASECALLER_DORADO_0_5_3,
-        cmd=dorado_modified_bases_5mCG_5hmCG,
-        tags="dorado v0.5.3, modified bases 5mCG & 5hmCG",
-    )
+    # aws_batch_env.create_batch_jobs(
+    #     compute,
+    #     container=BASECALLER_DORADO_0_5_3,
+    #     cmd=dorado_no_modified_bases,
+    #     tags="dorado v0.5.3, no modified bases",
+    # )
+    # aws_batch_env.create_batch_jobs(
+    #     compute,
+    #     container=BASECALLER_DORADO_0_8_2,
+    #     cmd=dorado_modified_bases_5mCG,
+    #     tags="dorado v0.8.2, modified bases 5mCG",
+    # )
+    # aws_batch_env.create_batch_jobs(
+    #     compute,
+    #     container=BASECALLER_DORADO_0_5_3,
+    #     cmd=dorado_modified_bases_5mCG,
+    #     tags="dorado v0.5.3, modified bases 5mCG",
+    # )
+    # aws_batch_env.create_batch_jobs(
+    #     compute,
+    #     container=BASECALLER_DORADO_0_8_2,
+    #     cmd=dorado_modified_bases_5mCG_5hmCG,
+    #     tags="dorado v0.8.2, modified bases 5mCG & 5hmCG",
+    # )
+    # aws_batch_env.create_batch_jobs(
+    #     compute,
+    #     container=BASECALLER_DORADO_0_5_3,
+    #     cmd=dorado_modified_bases_5mCG_5hmCG,
+    #     tags="dorado v0.5.3, modified bases 5mCG & 5hmCG",
+    # )
 
 
 if __name__ == "__main__":

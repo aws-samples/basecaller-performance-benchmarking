@@ -11,4 +11,6 @@ Cython>=3.0.10
 tables>=3.9.2
 kaleido==0.2.1; sys_platform == 'linux'
 kaleido==0.1.0post1; sys_platform == 'win32'
+kaleido; sys_platform == 'darwin'
 XlsxWriter>=3.2.0
+setuptools
