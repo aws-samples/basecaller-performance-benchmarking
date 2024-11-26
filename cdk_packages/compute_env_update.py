@@ -41,7 +41,7 @@ class ComputeEnvUpdate(Construct):
             ),
             handler='compute_env_update.lambda_handler',
             timeout=cdk.Duration.minutes(5),
-            runtime=lambda_.Runtime.PYTHON_3_12,
+            runtime=lambda_.Runtime.PYTHON_3_13,
             log_retention=logs.RetentionDays.THREE_MONTHS,
         )
 

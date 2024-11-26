@@ -40,7 +40,7 @@ class ImageBuildStarter(Construct):
             code=lambda_.Code.from_asset(os.path.join(dirname, 'assets', 'lambda_functions', 'start_image_build')),
             handler='start_image_build.lambda_handler',
             timeout=cdk.Duration.minutes(5),
-            runtime=lambda_.Runtime.PYTHON_3_12,
+            runtime=lambda_.Runtime.PYTHON_3_13,
             log_retention=logs.RetentionDays.THREE_MONTHS,
         )
 

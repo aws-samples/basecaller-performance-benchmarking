@@ -40,7 +40,7 @@ class SpotInterruptionNotify(Construct):
             code=lambda_.Code.from_asset(os.path.join(dirname, 'assets', 'lambda_functions', 'spot_interruption_notify')),
             handler='spot_interruption_notify.lambda_handler',
             timeout=cdk.Duration.minutes(5),
-            runtime=lambda_.Runtime.PYTHON_3_12,
+            runtime=lambda_.Runtime.PYTHON_3_13,
             log_retention=logs.RetentionDays.THREE_MONTHS,
         )
 
