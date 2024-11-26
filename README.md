@@ -86,27 +86,6 @@ This project deploys the following architecture (for a discussion please see the
 
 ## Preparing the AWS account for deployment
 
-<!-- TODO: Update instructions for deployment without Cloud9. Test with CloudShell. -->
-
-All commands shown below are executed in a [Cloud9 environment](https://us-west-2.console.aws.amazon.com/cloud9control/home?region=us-west-2#/) 
-with Ubuntu. Choose an m5.large instance type. It is required to expand the disk to 70 GB. The 
-code repository contains the script `resize.sh` to automate the disk resizing.
-
-When using CloudShell, switch directory for more space:
-```shell
-cd /home
-sudo mkdir -p deployment
-sudo chown cloudshell-user:cloudshell-user deployment
-sudo chmod 777 deployment
-cd deployment
-```
-
-After your Cloud9 environment has started, clone the code repository and resize the disk to 70 GB:
-```shell
-git clone https://github.com/aws-samples/basecaller-performance-benchmarking.git
-cd basecaller-performance-benchmarking/
-```
-
 This project performs a fully automated deployment of the performance benchmarking environment. The project utilizes 
 the AWS Cloud Development Toolkit version 2 (CDK v2) for Python.
 
@@ -120,8 +99,10 @@ the following values:
 - _All P4, P3 and P2 Spot Instance Requests_: 400
 - _Running On-Demand P instances_: 400
 
+All commands shown below are executed in the [AWS CloudShell](https://docs.aws.amazon.com/cloudshell/latest/userguide/welcome.html). Login to your AWS account and start a CloudShell session (see also [Getting started with AWS CloudShell](https://docs.aws.amazon.com/cloudshell/latest/userguide/getting-started.html)).
+
 The deployment requires the NVIDIA CUDA base container from the public docker repository in your private ECR repository.
-This container is required for the build of the guppy and dorado container.
+This container is required for the build of the guppy and dorado containers.
 Run the commands below to copy the container. Make sure you run the commands with AWS credentials for the us-west-2 
 region.
 ```shell
@@ -135,14 +116,29 @@ aws ecr get-login-password --region us-west-2 | docker login --username AWS --pa
 docker push "$aws_account_id.dkr.ecr.us-west-2.amazonaws.com/$cuda_container"
 ```
 
-You may want to free up space in the CloudShell by removing copies of Docker images.
-The following command removes all Docker images stored in the CloudShell. Use with caution.
-Adjust in case you want to delete only selected Docker images.
+After pushing the NVIDIA CUDA base container to your private ECR repository you may want to free up space in the CloudShell by removing the NVIDIA CUDA base container.
 ```shell
-docker rmi $(docker images -q)
+docker rmi $cuda_container
 ```
 
 ## Deploying the project
+
+The following commands create and switch into a new directory. This is neccessary as the default home folder of a ClodShell session
+is limited to a size of 1GB. The deployment of this project requires more than this capacity. The new folder is created in ephemeral
+(non-persistent) storage. Any files downloaded / created in this ephemeral storage are lost when the CloudShell session is reset. Ensure the deployment has completed before terminating the CloudShell session.
+```shell
+cd /home
+sudo mkdir -p deployment
+sudo chown cloudshell-user:cloudshell-user deployment
+sudo chmod 777 deployment
+cd deployment
+```
+
+Clone the code repository:
+```shell
+git clone https://github.com/aws-samples/basecaller-performance-benchmarking.git
+cd basecaller-performance-benchmarking/
+```
 
 Activate the Python virtual environment and install all required libraries:
 ```shell
