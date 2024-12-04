@@ -83,13 +83,21 @@ class BaseAMI(Construct):
         )
         mount_fsx_script.grant_read(params.image_builder.ec2_instance_role)
 
+        ont_base_parent_images = {
+            "us-west-2": "ami-0916101900b55ff89",  # Deep Learning OSS Nvidia Driver AMI GPU PyTorch 2.3.1 (Ubuntu 20.04)
+            "me-central-1": "ami-0b54b50cbf898f330",  # Deep Learning OSS Nvidia Driver AMI GPU PyTorch 2.5 (Ubuntu 22.04), (64-bit (x86))
+        }
+        parent_image = ont_base_parent_images.get(
+            region,
+            ont_base_parent_images["us-west-2"],
+        )
+
         self.recipe_ont_base_image = imagebuilder.CfnImageRecipe(
             self,
             "ONT base AMI",
             name="ONT base AMI",
             description="ONT base AMI",
-            # parent_image="ami-0c95e55075f3c7f51",  # Deep Learning AMI GPU PyTorch 2.1.0 (Ubuntu 20.04) 20231103
-            parent_image="ami-0916101900b55ff89",  # Deep Learning OSS Nvidia Driver AMI GPU PyTorch 2.3.1 (Ubuntu 20.04) 20241027
+            parent_image=parent_image,
             version=datetime.datetime.now().strftime("%Y.%m%d.%H%M%S"),
             components=[
                 imagebuilder.CfnImageRecipe.ComponentConfigurationProperty(

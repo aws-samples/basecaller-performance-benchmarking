@@ -70,6 +70,15 @@ class BasecallerContainer(Construct):
 
         self.pipeline_arns = []
 
+        ami_images = {
+            "us-west-2": "ami-0916101900b55ff89",  # Deep Learning OSS Nvidia Driver AMI GPU PyTorch 2.3.1 (Ubuntu 20.04)
+            "me-central-1": "ami-0b54b50cbf898f330",  # Deep Learning OSS Nvidia Driver AMI GPU PyTorch 2.5 (Ubuntu 22.04), (64-bit (x86))
+        }
+        image = ami_images.get(
+            region,
+            ami_images["us-west-2"],
+        )
+
         for basecaller_container in basecaller_containers:
             repository = ecr.Repository(
                 self,
@@ -92,7 +101,7 @@ class BasecallerContainer(Construct):
                     os.path.join(dirname, "assets", "dockerfile_basecaller.yaml")
                 ).read(),
                 instance_configuration=imagebuilder.CfnContainerRecipe.InstanceConfigurationProperty(
-                    image="ami-0c95e55075f3c7f51",
+                    image=image,
                     block_device_mappings=[
                         imagebuilder.CfnContainerRecipe.InstanceBlockDeviceMappingProperty(
                             device_name="/dev/sda1",

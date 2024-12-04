@@ -291,8 +291,6 @@ def get_instance_types():
     This project only supports instance types that run with the "Deep Learning OSS Nvidia Driver AMI".
     """
 
-    ec2_client = boto3.client("ec2")
-
     # If set to 'True', only validated instance types will be returned. This limits the number of
     # AWS Batch compute environments. AWS Batch has a limit of 50 compute environments per account.
     use_only_validated = True

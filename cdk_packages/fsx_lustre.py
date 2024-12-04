@@ -16,62 +16,79 @@ class FSxLustre(Construct):
     def __init__(self, scope: Construct, construct_id: str, params=None):
         super().__init__(scope, construct_id)
 
+        region = cdk.Stack.of(self).region
+
         # Security groups for FSx for Lustre. Rules are based on
         # https://docs.aws.amazon.com/fsx/latest/LustreGuide/limit-access-security-groups.html
         sg_fsx_lustre_servers = ec2.SecurityGroup(
-            self, 'SG FSx for Lustre file servers',
+            self,
+            "SG FSx for Lustre file servers",
             vpc=params.network.vpc,
-            description='FSx for Lustre file servers',
-            allow_all_outbound=False
+            description="FSx for Lustre file servers",
+            allow_all_outbound=False,
         )
 
         # Inbound rules for FSx for Lustre file servers.
         sg_fsx_lustre_servers.add_ingress_rule(
             ec2.Peer.ipv4(params.network.vpc.vpc_cidr_block),
-            ec2.Port.tcp_range(988, 1023), 'Allows Lustre traffic'
+            ec2.Port.tcp_range(988, 1023),
+            "Allows Lustre traffic",
         )
 
         # Outbound rules for FSx for Lustre file servers.
         sg_fsx_lustre_servers.add_egress_rule(
             ec2.Peer.ipv4(params.network.vpc.vpc_cidr_block),
-            ec2.Port.tcp_range(988, 1023), 'Allows Lustre traffic'
+            ec2.Port.tcp_range(988, 1023),
+            "Allows Lustre traffic",
         )
 
-        self.cfn_fsx_file_system = fsx.CfnFileSystem(
-            self, 'FSx Lustre',
-            file_system_type='LUSTRE',
-            subnet_ids=[params.network.subnets.subnet_ids[0]],
-            lustre_configuration=fsx.CfnFileSystem.LustreConfigurationProperty(
-                deployment_type='PERSISTENT_2',
+        lustre_config_region = {
+            "us-west-2": fsx.CfnFileSystem.LustreConfigurationProperty(
+                deployment_type="PERSISTENT_2",
                 per_unit_storage_throughput=125,
             ),
+            "me-central-1": fsx.CfnFileSystem.LustreConfigurationProperty(
+                deployment_type="PERSISTENT_1",
+                per_unit_storage_throughput=100,
+            ),
+        }
+
+        self.cfn_fsx_file_system = fsx.CfnFileSystem(
+            self,
+            "FSx Lustre",
+            file_system_type="LUSTRE",
+            file_system_type_version="2.15",
+            subnet_ids=[params.network.subnets.subnet_ids[0]],
+            lustre_configuration=lustre_config_region[region],
             security_group_ids=[sg_fsx_lustre_servers.security_group_id],
             storage_capacity=2400,
-            storage_type='SSD',
+            storage_type="SSD",
         )
 
         fsx.CfnDataRepositoryAssociation(
-            self, 'Data repository association',
+            self,
+            "Data repository association",
             data_repository_path=params.data.bucket.s3_url_for_object(),
             file_system_id=self.cfn_fsx_file_system.ref,
-            file_system_path='/',
+            file_system_path="/",
             batch_import_meta_data_on_create=True,
             s3=fsx.CfnDataRepositoryAssociation.S3Property(
                 auto_export_policy=fsx.CfnDataRepositoryAssociation.AutoExportPolicyProperty(
-                    events=['NEW', 'CHANGED', 'DELETED']
+                    events=["NEW", "CHANGED", "DELETED"]
                 ),
                 auto_import_policy=fsx.CfnDataRepositoryAssociation.AutoImportPolicyProperty(
-                    events=['NEW', 'CHANGED', 'DELETED']
-                )
+                    events=["NEW", "CHANGED", "DELETED"]
+                ),
             ),
         )
 
         # Store the DNS and mount name in Parameter Store
         ssm.StringParameter(
-            self, 'SSM parameter FSx for Lustre',
-            parameter_name='/ONT-performance-benchmark/fsx-lustre-dns-mount-name',
-            string_value=f'{self.cfn_fsx_file_system.attr_dns_name}@tcp:/'
-                         f'{self.cfn_fsx_file_system.attr_lustre_mount_name}'
+            self,
+            "SSM parameter FSx for Lustre",
+            parameter_name="/ONT-performance-benchmark/fsx-lustre-dns-mount-name",
+            string_value=f"{self.cfn_fsx_file_system.attr_dns_name}@tcp:/"
+            f"{self.cfn_fsx_file_system.attr_lustre_mount_name}",
         )
 
         # ----------------------------------------------------------------
@@ -82,9 +99,9 @@ class FSxLustre(Construct):
             construct=sg_fsx_lustre_servers,
             suppressions=[
                 {
-                    'id': 'CdkNagValidationFailure',
-                    'reason': 'Suppression warning caused by a parameter referencing an intrinsic function. However, '
-                              'inbound address range is limited to IP range of AWS Batch compute instances.',
+                    "id": "CdkNagValidationFailure",
+                    "reason": "Suppression warning caused by a parameter referencing an intrinsic function. However, "
+                    "inbound address range is limited to IP range of AWS Batch compute instances.",
                 },
             ],
             apply_to_children=True,

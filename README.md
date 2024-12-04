@@ -107,13 +107,13 @@ Run the commands below to copy the container. Make sure you run the commands wit
 region.
 ```shell
 cuda_container="nvidia/cuda:12.6.2-runtime-ubuntu20.04"
-aws ecr create-repository --repository-name 'nvidia/cuda' --region us-west-2
+aws_account_id=$(aws sts get-caller-identity --query 'Account' --output text)
+aws ecr create-repository --repository-name 'nvidia/cuda' --region $AWS_DEFAULT_REGION --no-cli-pager
 docker login
 docker pull "$cuda_container"
-aws_account_id=$(aws sts get-caller-identity --query 'Account' --output text)
-docker tag "$cuda_container" "$aws_account_id.dkr.ecr.us-west-2.amazonaws.com/$cuda_container"
-aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin "$aws_account_id.dkr.ecr.us-west-2.amazonaws.com"
-docker push "$aws_account_id.dkr.ecr.us-west-2.amazonaws.com/$cuda_container"
+docker tag "$cuda_container" "$aws_account_id.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$cuda_container"
+aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin "$aws_account_id.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+docker push "$aws_account_id.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$cuda_container"
 ```
 
 After pushing the NVIDIA CUDA base container to your private ECR repository you may want to free up space in the CloudShell by removing the NVIDIA CUDA base container.
