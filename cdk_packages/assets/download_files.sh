@@ -35,7 +35,7 @@ if [ ! -f "${INDICATOR}" ]; then
     touch "${INDICATOR}"
 fi
 
-echo ----- install FSx for Lustre client -----
+echo ----- install kernel for FSx for Lustre client -----
 
 INDICATOR=/var/tmp/indicator-install-kernel
 if [ ! -f "${INDICATOR}" ]; then
@@ -51,6 +51,8 @@ if [ ! -f "${INDICATOR}" ]; then
     sleep 60
 fi
 
+echo ----- install FSx for Lustre client -----
+
 INDICATOR=/var/tmp/indicator-install-fsx-lustre
 if [ ! -f "${INDICATOR}" ]; then
     apt-get install -y linux-aws lustre-client-modules-"$(uname -r)"
@@ -60,7 +62,7 @@ if [ ! -f "${INDICATOR}" ]; then
     sleep 60
 fi
 
-# echo ----- install Pod5 -----
+echo ----- install Pod5 -----
 
 INDICATOR=/var/tmp/indicator-install-pod5
 if [ ! -f "${INDICATOR}" ]; then
@@ -96,7 +98,7 @@ if [ ! -f "${INDICATOR}" ]; then
     # https://labs.epi2me.io/cliveome_5mc_cfdna_celldna/
     download_url='s3://ont-open-data/cliveome_kit14_2022.05/gdna/flowcells/ONLA29134/20220510_1127_5H_PAM63974_a5e7a202/fast5_pass/'
 
-    files_to_download=($(aws s3 ls $download_url --no-sign-request | awk '{print $4}' | sort -n -t _ -k 4))
+    files_to_download=($(aws s3 ls $download_url --no-sign-request --region "eu-west-1" | awk '{print $4}' | sort -n -t _ -k 4))
     local_s3_url=$(eval 'aws ssm get-parameters --names /ONT-performance-benchmark/data-s3-bucket --query '"'"'Parameters[0].Value'"'"' --output text')
     aws ssm put-parameter --name /ONT-performance-benchmark/download-status --value "in progress" --overwrite --output text
     for ((i = 0; i < ${#files_to_download[@]}; ++i)); do
